@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import CreatePlan from '../components/CreatePlan';
+import PlansList from '../components/PlansList';
 
 function Dashboard() {
   const navigate = useNavigate();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleLogout = async () => {
     try {
@@ -14,8 +18,12 @@ function Dashboard() {
     }
   };
 
+  const handlePlanCreated = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
-    <div style={{ padding: '40px' }}>
+    <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1>Dashboard</h1>
         <button 
@@ -33,8 +41,9 @@ function Dashboard() {
           Logout
         </button>
       </div>
-      <p>Welcome! You're logged in.</p>
-      <p>This is where we'll build the collaborative planning features.</p>
+
+      <CreatePlan onPlanCreated={handlePlanCreated} />
+      <PlansList key={refreshKey} />
     </div>
   );
 }
