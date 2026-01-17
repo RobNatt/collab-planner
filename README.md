@@ -1,16 +1,118 @@
-# React + Vite
+# Collab Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A collaborative planning application built with React, Firebase, and Vite. Create shared plans for vacations, events, or projects, and manage tasks collaboratively with your team.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Current Features
+- **User Authentication** - Secure sign up, login, and logout with Firebase Auth
+- **Plan Management** - Create and organize plans with dates and descriptions
+- **Task Lists** - Add, complete, and delete tasks for each plan
+- **Real-time Data** - All data synced with Firebase Firestore
+- **Responsive Design** - Clean, intuitive interface
 
-## React Compiler
+### Coming Soon
+- Invite system (share plans via email/link)
+- Real-time collaboration (see updates from other members instantly)
+- Voting system for group decisions
+- Activity scheduling with time slots
+- Mobile app version
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+- **Frontend:** React 19, React Router
+- **Backend:** Firebase (Authentication, Firestore Database)
+- **Build Tool:** Vite
+- **Styling:** Inline CSS (easily replaceable with Tailwind/Material-UI)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📦 Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/RobNatt/collab-planner.git
+cd collab-planner
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+
+4. Set up your Firebase config:
+   - Create a web app in your Firebase project
+   - Copy your Firebase config
+   - Replace the config in `src/config/firebase.js`
+
+5. Enable Firebase services:
+   - **Authentication:** Enable Email/Password sign-in
+   - **Firestore Database:** Create database in test mode
+
+6. Run the development server:
+```bash
+npm run dev
+```
+
+7. Open [http://localhost:5173](http://localhost:5173) in your browser
+
+## 🎯 Usage
+
+1. **Sign Up** - Create an account with email and password
+2. **Create a Plan** - Add a new plan with name, description, and dates
+3. **Add Tasks** - Click on a plan to add tasks/activities
+4. **Manage Tasks** - Check off completed tasks or delete them
+5. **Collaborate** - (Coming soon) Invite others to join your plans
+
+## 📁 Project Structure
+```
+collab-planner/
+├── src/
+│   ├── components/
+│   │   ├── CreatePlan.jsx      # Form to create new plans
+│   │   └── PlansList.jsx       # Display all user's plans
+│   ├── config/
+│   │   └── firebase.js         # Firebase configuration
+│   ├── pages/
+│   │   ├── Login.jsx           # Authentication page
+│   │   ├── Dashboard.jsx       # Main dashboard view
+│   │   └── PlanDetails.jsx     # Individual plan with tasks
+│   ├── App.jsx                 # Main app component with routing
+│   └── main.jsx                # App entry point
+├── package.json
+└── README.md
+```
+
+## 🔐 Security Notes
+
+- Firebase API keys are currently committed (safe for client-side apps)
+- Firestore security rules should be updated before production
+- Consider moving to environment variables for production deployment
+
+## 🚧 Roadmap
+
+- [ ] Invite system with shareable links
+- [ ] Real-time updates using Firestore listeners
+- [ ] Voting mechanism for group decisions
+- [ ] Calendar view for scheduled activities
+- [ ] Mobile responsive improvements
+- [ ] User profiles and avatars
+- [ ] Push notifications
+- [ ] Export plans to PDF/Calendar apps
+
+## 🤝 Contributing
+
+This is a learning project, but suggestions and feedback are welcome!
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 👤 Author
+
+**Rob Natt**
+- GitHub: [@RobNatt](https://github.com/RobNatt)
+
+---
+
+Built as a portfolio project to demonstrate React, Firebase, and full-stack development skills.
