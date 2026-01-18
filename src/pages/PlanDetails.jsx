@@ -10,6 +10,8 @@ function PlanDetails() {
   const [activities, setActivities] = useState([]);
   const [newActivity, setNewActivity] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState('');
 
   useEffect(() => {
     fetchPlanAndActivities();
@@ -80,6 +82,31 @@ function PlanDetails() {
     }
   };
 
+  const handleStartEdit = (activity) => {
+  setEditingId(activity.id);
+  setEditingText(activity.title);
+};
+
+const handleSaveEdit = async (activityId) => {
+  if (!editingText.trim()) return;
+  
+  try {
+    await updateDoc(doc(db, 'activities', activityId), {
+      title: editingText
+    });
+    setEditingId(null);
+    setEditingText('');
+    fetchPlanAndActivities();
+  } catch (error) {
+    console.error('Error updating activity:', error);
+  }
+};
+
+const handleCancelEdit = () => {
+  setEditingId(null);
+  setEditingText('');
+};
+
   if (loading) return <div style={{ padding: '40px' }}>Loading...</div>;
   if (!plan) return <div style={{ padding: '40px' }}>Plan not found</div>;
 
@@ -143,47 +170,115 @@ function PlanDetails() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {activities.map(activity => (
-            <div 
-              key={activity.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '15px',
-                padding: '15px',
-                backgroundColor: 'white',
-                border: '1px solid #ddd',
-                borderRadius: '8px'
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={activity.completed}
-                onChange={() => handleToggleComplete(activity.id, activity.completed)}
-                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-              />
-              <span style={{ 
-                flex: 1,
-                textDecoration: activity.completed ? 'line-through' : 'none',
-                color: activity.completed ? '#999' : '#333'
-              }}>
-                {activity.title}
-              </span>
-              <button
-                onClick={() => handleDeleteActivity(activity.id)}
-                style={{
-                  padding: '5px 10px',
-                  backgroundColor: '#f44336',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          ))}
+  <div 
+    key={activity.id}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '15px',
+      padding: '15px',
+      backgroundColor: 'white',
+      border: '1px solid #ddd',
+      borderRadius: '8px'
+    }}
+  >
+    <input
+      type="checkbox"
+      checked={activity.completed}
+      onChange={() => handleToggleComplete(activity.id, activity.completed)}
+      style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+      disabled={editingId === activity.id}
+    />
+    
+    {editingId === activity.id ? (
+      <>
+        <input
+          type="text"
+          value={editingText}
+          onChange={(e) => setEditingText(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '8px',
+            fontSize: '16px',
+            border: '2px solid #4CAF50',
+            borderRadius: '5px'
+          }}
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSaveEdit(activity.id);
+            if (e.key === 'Escape') handleCancelEdit();
+          }}
+        />
+        <button
+          onClick={() => handleSaveEdit(activity.id)}
+          style={{
+            padding: '8px 15px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Save
+        </button>
+        <button
+          onClick={handleCancelEdit}
+          style={{
+            padding: '8px 15px',
+            backgroundColor: '#999',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Cancel
+        </button>
+      </>
+    ) : (
+      <>
+        <span style={{ 
+          flex: 1,
+          textDecoration: activity.completed ? 'line-through' : 'none',
+          color: activity.completed ? '#999' : '#333'
+        }}>
+          {activity.title}
+        </span>
+        <button
+          onClick={() => handleStartEdit(activity)}
+          style={{
+            padding: '5px 10px',
+            backgroundColor: '#2196F3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => handleDeleteActivity(activity.id)}
+          style={{
+            padding: '5px 10px',
+            backgroundColor: '#f44336',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Delete
+        </button>
+      </>
+    )}
+  </div>
+))}
         </div>
       )}
     </div>
