@@ -15,15 +15,16 @@ function CreatePlan({ onPlanCreated }) {
 
     try {
       const planData = {
-        name: planName,
-        description: description,
-        startDate: startDate,
-        endDate: endDate,
-        createdBy: auth.currentUser.uid,
-        createdByEmail: auth.currentUser.email,
-        members: [auth.currentUser.uid],
-        createdAt: serverTimestamp(),
-      };
+     name: planName,
+      description: description,
+      startDate: startDate,
+      endDate: endDate,
+      createdBy: auth.currentUser.uid,
+      createdByEmail: auth.currentUser.email,
+      members: [auth.currentUser.uid],
+      admin: auth.currentUser.uid,  // NEW - mark creator as admin
+      createdAt: serverTimestamp(),
+    };
 
       const docRef = await addDoc(collection(db, 'plans'), planData);
       console.log('Plan created with ID:', docRef.id);

@@ -126,10 +126,24 @@ const handleCancelEdit = () => {
         ← Back to Dashboard
       </button>
 
-      <h1>{plan.name}</h1>
-      {plan.description && <p style={{ color: '#666' }}>{plan.description}</p>}
-      <p style={{ color: '#888' }}>📅 {plan.startDate} to {plan.endDate}</p>
-
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+  <h1 style={{ margin: 0 }}>{plan.name}</h1>
+  {plan.admin === auth.currentUser.uid && (
+    <span style={{
+      backgroundColor: '#4CAF50',
+      color: 'white',
+      padding: '4px 12px',
+      borderRadius: '12px',
+      fontSize: '14px',
+      fontWeight: 'bold'
+    }}>
+      ADMIN
+    </span>
+  )}
+</div>
+{plan.description && <p style={{ color: '#666', marginTop: '10px' }}>{plan.description}</p>}
+<p style={{ color: '#888' }}>📅 {plan.startDate} to {plan.endDate}</p>
+      
       <div style={{ 
         backgroundColor: '#f5f5f5', 
         padding: '20px', 
