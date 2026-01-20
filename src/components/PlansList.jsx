@@ -20,10 +20,30 @@ function PlansList() {
       );
       
       const querySnapshot = await getDocs(q);
-      const plansData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const plansData = await Promise.all(
+        querySnapshot.docs.map(async (planDoc) => {
+          const planId = planDoc.id;
+          
+          // Fetch activities for this plan
+          const activitiesQuery = query(
+            collection(db, 'activities'),
+            where('planId', '==', planId)
+          );
+          const activitiesSnapshot = await getDocs(activitiesQuery);
+          
+          const totalTasks = activitiesSnapshot.size;
+          const completedTasks = activitiesSnapshot.docs.filter(
+            doc => doc.data().completed
+          ).length;
+          
+          return {
+            id: planId,
+            ...planDoc.data(),
+            totalTasks,
+            completedTasks
+          };
+        })
+      );
       
       setPlans(plansData);
     } catch (error) {
@@ -67,7 +87,16 @@ function PlansList() {
             <div style={{ fontSize: '14px', color: '#888' }}>
               <div>📅 {plan.startDate} to {plan.endDate}</div>
               <div>👥 {plan.members?.length || 1} member(s)</div>
-              <div>Created by: {plan.createdByEmail}</div>
+              <div style={{ 
+                marginTop: '8px',
+                padding: '8px',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}>
+                ✓ {plan.completedTasks || 0}/{plan.totalTasks || 0} tasks complete
+              </div>
+              <div style={{ marginTop: '5px' }}>Created by: {plan.createdByEmail}</div>
             </div>
           </div>
         ))}
