@@ -96,8 +96,22 @@ function PlansList() {
               }}>
                 ✓ {plan.completedTasks || 0}/{plan.totalTasks || 0} tasks complete
               </div>
-              <div style={{ marginTop: '5px' }}>Created by: {plan.createdByEmail}</div>
-            </div>
+              <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <span>Created by: {plan.createdByEmail}</span>
+    {plan.admin === auth.currentUser.uid && (
+      <span style={{
+        backgroundColor: '#4CAF50',
+        color: 'white',
+        padding: '2px 8px',
+        borderRadius: '10px',
+        fontSize: '12px',
+        fontWeight: 'bold'
+      }}>
+        YOU'RE ADMIN
+      </span>
+    )}
+  </div>
+</div>
           </div>
         ))}
       </div>
