@@ -102,6 +102,33 @@ const handleSaveEdit = async (activityId) => {
   }
 };
 
+const handleDeletePlan = async () => {
+  if (!window.confirm(`Are you sure you want to delete "${plan.name}"? This will delete all tasks and cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    // Delete all activities first
+    const activitiesQuery = query(collection(db, 'activities'), where('planId', '==', planId));
+    const activitiesSnapshot = await getDocs(activitiesQuery);
+    
+    const deletePromises = activitiesSnapshot.docs.map(doc => 
+      deleteDoc(doc.ref)
+    );
+    await Promise.all(deletePromises);
+
+    // Delete the plan
+    await deleteDoc(doc(db, 'plans', planId));
+
+    // Navigate back to dashboard
+    alert('Plan deleted successfully');
+    navigate('/dashboard');
+  } catch (error) {
+    console.error('Error deleting plan:', error);
+    alert('Error deleting plan: ' + error.message);
+  }
+};
+
 const handleCancelEdit = () => {
   setEditingId(null);
   setEditingText('');
@@ -125,6 +152,38 @@ const handleCancelEdit = () => {
       >
         ← Back to Dashboard
       </button>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+  <button 
+    onClick={() => navigate('/dashboard')}
+    style={{ 
+      padding: '8px 16px',
+      backgroundColor: '#ddd',
+      border: 'none',
+      borderRadius: '5px',
+      cursor: 'pointer'
+    }}
+  >
+    ← Back to Dashboard
+  </button>
+
+  {plan.admin === auth.currentUser.uid && (
+    <button
+      onClick={handleDeletePlan}
+      style={{
+        padding: '8px 16px',
+        backgroundColor: '#f44336',
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontWeight: 'bold'
+      }}
+    >
+      🗑️ Delete Plan
+    </button>
+  )}
+</div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
   <h1 style={{ margin: 0 }}>{plan.name}</h1>
