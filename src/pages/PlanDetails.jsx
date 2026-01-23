@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
-import MembersList from '../components/MembersList';
+import MembersList from '../components/Memberslist.jsx';
+import InviteSection from '../components/InviteSection.jsx';
 
 // ========================================
 // MAIN COMPONENT
@@ -227,6 +228,9 @@ function PlanDetails() {
       {plan.description && <p style={{ color: '#666', marginTop: '10px' }}>{plan.description}</p>}
       <p style={{ color: '#888' }}>📅 {plan.startDate} to {plan.endDate}</p>
 
+
+      <InviteSection plan={plan} />
+      
       {/* ========================================
           MEMBERS LIST
           ======================================== */}
