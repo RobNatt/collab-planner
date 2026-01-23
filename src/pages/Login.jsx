@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
@@ -9,6 +10,8 @@ function Login() {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,11 +25,18 @@ function Login() {
         // Log in existing user
         await signInWithEmailAndPassword(auth, email, password);
       }
-      // Navigate to dashboard on success
-      navigate('/dashboard');
+
+    // Check for invite code in URL
+      const inviteCode = searchParams.get('invite');
+        if (inviteCode) {
+          navigate(`/join/${inviteCode}`);
+        } else {
+          navigate('/dashboard');
+        }
     } catch (err) {
       setError(err.message);
     }
+    console.log('Login successful, location.state:', location.state);
   };
 
   return (

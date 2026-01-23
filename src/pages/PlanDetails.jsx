@@ -230,7 +230,7 @@ function PlanDetails() {
 
 
       <InviteSection plan={plan} />
-      
+
       {/* ========================================
           MEMBERS LIST
           ======================================== */}

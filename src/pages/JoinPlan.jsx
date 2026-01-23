@@ -26,9 +26,11 @@ function JoinPlan() {
   useEffect(() => {
     if (!auth.currentUser) {
       // Redirect to login if not authenticated
-      navigate('/', { state: { inviteCode } });
+      navigate(`/?redirect=/join/${inviteCode}`);
       return;
     }
+
+    console.log('Not authenticated, redirecting with inviteCode:', inviteCode);
     fetchPlanByInviteCode();
   }, [inviteCode]);
 
