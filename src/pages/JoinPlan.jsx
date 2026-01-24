@@ -39,13 +39,18 @@ function JoinPlan() {
   // ========================================
   const fetchPlanByInviteCode = async () => {
     try {
+      console.log('Fetching plan with invite code:', inviteCode.toUpperCase());
+
       const q = query(
         collection(db, 'plans'),
         where('inviteCode', '==', inviteCode.toUpperCase())
       );
-      
+
       const querySnapshot = await getDocs(q);
-      
+
+      console.log('Query result - empty?', querySnapshot.empty);
+      console.log('Query result - size:', querySnapshot.size);
+
       if (querySnapshot.empty) {
         setError('Invalid invite code. This plan does not exist or the invite has expired.');
         setLoading(false);
@@ -54,7 +59,9 @@ function JoinPlan() {
 
       const planDoc = querySnapshot.docs[0];
       const planData = { id: planDoc.id, ...planDoc.data() };
-      
+
+      console.log('Plan found:', planData.name);
+
       // Check if user is already a member
       if (planData.members.includes(auth.currentUser.uid)) {
         setError('You are already a member of this plan!');
@@ -65,8 +72,10 @@ function JoinPlan() {
 
       setPlan(planData);
     } catch (error) {
-      console.error('Error fetching plan:', error);
-      setError('Error loading plan. Please try again.');
+      console.error('Error fetching plan - Full error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      setError(`Error loading plan: ${error.message}. Check console for details.`);
     } finally {
       setLoading(false);
     }
@@ -98,13 +107,25 @@ function JoinPlan() {
   // ========================================
   if (loading) {
     return (
-      <div style={{ 
-        padding: '40px', 
-        maxWidth: '600px', 
-        margin: '0 auto',
-        textAlign: 'center'
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px'
       }}>
-        <h2>Loading invite...</h2>
+        <div style={{
+          width: '100%',
+          maxWidth: '600px',
+          padding: '40px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <h2>Loading invite...</h2>
+        </div>
       </div>
     );
   }
@@ -114,27 +135,39 @@ function JoinPlan() {
   // ========================================
   if (error) {
     return (
-      <div style={{ 
-        padding: '40px', 
-        maxWidth: '600px', 
-        margin: '0 auto',
-        textAlign: 'center'
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px'
       }}>
-        <h2 style={{ color: '#f44336' }}>❌ {error}</h2>
-        <button
-          onClick={() => navigate('/dashboard')}
-          style={{
-            marginTop: '20px',
-            padding: '10px 20px',
-            backgroundColor: '#2196F3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Go to Dashboard
-        </button>
+        <div style={{
+          width: '100%',
+          maxWidth: '600px',
+          padding: '40px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <h2 style={{ color: '#f44336' }}>❌ {error}</h2>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              backgroundColor: '#2196F3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            Go to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -143,17 +176,28 @@ function JoinPlan() {
   // RENDER - JOIN CONFIRMATION
   // ========================================
   return (
-    <div style={{ 
-      padding: '40px', 
-      maxWidth: '600px', 
-      margin: '0 auto'
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '20px'
     }}>
       <div style={{
-        backgroundColor: '#e3f2fd',
-        padding: '30px',
+        width: '100%',
+        maxWidth: '600px',
+        padding: '40px',
+        backgroundColor: 'white',
         borderRadius: '12px',
-        textAlign: 'center'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
+        <div style={{
+          backgroundColor: '#e3f2fd',
+          padding: '30px',
+          borderRadius: '12px',
+          textAlign: 'center'
+        }}>
         <h1 style={{ marginTop: 0 }}>🎉 You've been invited!</h1>
         
         <div style={{
@@ -209,6 +253,7 @@ function JoinPlan() {
         >
           No thanks, go to dashboard
         </button>
+      </div>
       </div>
     </div>
   );

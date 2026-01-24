@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, updateDoc, doc, arrayRemove } from 'firebase/firestore';
+import { updateDoc, doc, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 
 function MembersList({ plan, onMemberRemoved }) {
@@ -42,7 +42,7 @@ function MembersList({ plan, onMemberRemoved }) {
       await updateDoc(doc(db, 'plans', plan.id), {
         members: arrayRemove(memberId)
       });
-      
+
       alert('Member removed successfully');
       if (onMemberRemoved) onMemberRemoved();
     } catch (error) {
@@ -51,7 +51,27 @@ function MembersList({ plan, onMemberRemoved }) {
     }
   };
 
+  const handleLeavePlan = async () => {
+    if (!window.confirm(`Are you sure you want to leave "${plan.name}"? You'll need a new invite to rejoin.`)) {
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'plans', plan.id), {
+        members: arrayRemove(auth.currentUser.uid)
+      });
+
+      alert('You have left the plan successfully');
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error('Error leaving plan:', error);
+      alert('Error leaving plan: ' + error.message);
+    }
+  };
+
   if (loading) return <div>Loading members...</div>;
+
+  const isCurrentUserAdmin = plan.admin === auth.currentUser.uid;
 
   return (
     <div style={{
@@ -60,7 +80,26 @@ function MembersList({ plan, onMemberRemoved }) {
       borderRadius: '8px',
       marginBottom: '20px'
     }}>
-      <h3>Members ({members.length})</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <h3 style={{ margin: 0 }}>Members ({members.length})</h3>
+        {!isCurrentUserAdmin && (
+          <button
+            onClick={handleLeavePlan}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#FF9800',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '14px'
+            }}
+          >
+            🚪 Leave Plan
+          </button>
+        )}
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {members.map(member => (
           <div 
@@ -103,7 +142,7 @@ function MembersList({ plan, onMemberRemoved }) {
               </div>
             </div>
             
-            {plan.admin === auth.currentUser.uid && member.id !== plan.admin && (
+            {isCurrentUserAdmin && member.id !== plan.admin && (
               <button
                 onClick={() => handleRemoveMember(member.id)}
                 style={{

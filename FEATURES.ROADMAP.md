@@ -49,67 +49,77 @@
 - [x] Role-based permissions in database
 - [x] Admin-only: Delete plan with all tasks
 - [x] Firebase security rules enforce admin permissions
-- [ ] Member management UI (coming next)
+- [x] Member management UI (coming next)
 
 ## 📋 UPCOMING FEATURES (Next 2-3 Weeks)
 
-### Week 1: Collaboration Foundation
+### Week 1: Collaboration Foundation ✅ COMPLETED
 
-#### Invite System
-- [ ] Generate shareable invite links
-- [ ] Join plan via invite code
+#### Invite System ✅
+- [x] Generate shareable invite links
+- [x] Join plan via invite code
+- [x] QR code for invite links
+- [x] Redirect flow for unauthenticated users
 - [ ] Email invite functionality (optional)
 - [ ] Invite expiration/limits
 
-#### Member Management
-- [ ] Display all plan members
-- [ ] Admin can remove members
-- [ ] Member list with roles
-- [ ] Leave plan functionality
+#### Member Management ✅
+- [x] Display all plan members
+- [x] Admin can remove members
+- [x] Member list with roles
+- [x] Leave plan functionality
+- [x] Security rules for invite system
 
-#### Task Type System
-- [ ] Separate "Simple Tasks" from "Activities"
-- [ ] Toggle between task types
-- [ ] Different UI for each type
-- [ ] Database schema update
+#### Task Type System ✅ COMPLETED
+- [x] Separate "Simple Tasks" from "Activities"
+- [x] Toggle between task types
+- [x] Different UI for each type (color-coded borders and icons)
+- [x] Database schema update (type field added)
+- [x] Backward compatibility for existing tasks
 
 ### Week 2: Calendar & Voting
 
-#### Calendar System
-- [ ] Visual calendar display
-- [ ] Show trip date range
-- [ ] Highlight trip duration
-- [ ] Month/week views
+#### Calendar System ✅ COMPLETED
+- [x] Visual calendar display
+- [x] Show trip date range
+- [x] Highlight trip duration
+- [x] Month/week views
+- [x] Start/End date badges
+- [x] Trip duration counter
+- [x] Today indicator
 
-#### Voting System
-- [ ] Create polls for trip dates
-- [ ] Members vote on date options
-- [ ] Display vote results visually
-- [ ] Admin finalizes dates based on votes
-- [ ] General voting for any decision
+#### Voting System ✅ COMPLETED
+- [x] Create date/time suggestions for activities
+- [x] Members vote on suggestions
+- [x] Display vote results with vote counts
+- [x] Admin approves suggestions to schedule on calendar
+- [x] Calendar integration with scheduled activities
+- [x] Day details modal showing scheduled items
 
-### Week 3: Expense Management
+### Week 3: Expense Management ✅ COMPLETED
 
-#### Expense Tracking
-- [ ] Add expense amount to activities
-- [ ] Expense categories (flights, lodging, food, etc.)
-- [ ] Who paid field
-- [ ] Receipt upload (image/PDF)
-- [ ] Expense summary per plan
+#### Expense Tracking ✅
+- [x] Add expense with description and amount
+- [x] Expense categories (food, lodging, transport, activities, shopping, other)
+- [x] Who paid field (select from members)
+- [x] Expense summary per plan
+- [x] Edit and delete expenses
+- [x] Category icons for visual identification
 
-#### Smart Splitting
-- [ ] Even split calculation
-- [ ] Category-based splits (e.g., 6 flew, 2 drove)
-- [ ] Custom split percentages
-- [ ] Individual expenses (not split)
-- [ ] Expense categories managed by admin
+#### Smart Splitting ✅
+- [x] Even split calculation (split among all members)
+- [x] Custom split amounts per person
+- [x] Individual expenses (personal, no split)
+- [x] Expense categories with dropdown selection
+- [x] Dynamic split interface
 
-#### Settlement System
-- [ ] Calculate who owes whom
-- [ ] Settlement dashboard
-- [ ] Simplify debts (minimize transactions)
-- [ ] Export to Venmo/PayPal (stretch goal)
-- [ ] Mark debts as paid
+#### Settlement System ✅
+- [x] Calculate who owes whom
+- [x] Settlement dashboard with balances
+- [x] Simplify debts (minimize transactions)
+- [x] Total expense summary
+- [x] Visual settlement display
+- [x] Optimized payment suggestions
 
 ---
 

@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
+import { useUserProfiles } from '../hooks/useUserProfile';
+import { getUserDisplayName } from '../utils/userHelpers';
 
 function PlansList() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Get all unique admin IDs from plans
+  const adminIds = [...new Set(plans.map(plan => plan.admin).filter(Boolean))];
+  const { profiles } = useUserProfiles(adminIds);
 
   useEffect(() => {
     fetchPlans();
@@ -97,7 +103,7 @@ function PlansList() {
                 ✓ {plan.completedTasks || 0}/{plan.totalTasks || 0} tasks complete
               </div>
               <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <span>Created by: {plan.createdByEmail}</span>
+    <span>Created by: {getUserDisplayName(plan.admin, profiles, auth.currentUser.uid)}</span>
     {plan.admin === auth.currentUser.uid && (
       <span style={{
         backgroundColor: '#4CAF50',
