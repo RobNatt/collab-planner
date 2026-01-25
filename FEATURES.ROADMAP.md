@@ -125,13 +125,13 @@
 
 ## 🎨 POLISH & ENHANCEMENT
 
-### UI Improvements
-- [ ] Dark mode toggle
-- [ ] Better mobile responsiveness
-- [ ] Loading skeletons
-- [ ] Animations/transitions
-- [ ] Toast notifications
-- [ ] Custom color themes
+### UI Improvements ✅ COMPLETED
+- [x] Dark mode toggle
+- [x] Better mobile responsiveness
+- [x] Loading skeletons
+- [x] Animations/transitions
+- [x] Toast notifications
+- [x] Custom color themes (light/dark theme system)
 
 ### User Experience
 - [ ] Search/filter plans

@@ -12,6 +12,10 @@ import DayDetailsModal from '../components/DayDetailsModal.jsx';
 import MemberDirectory from '../components/MemberDirectory.jsx';
 import { useUserProfiles } from '../hooks/useUserProfile';
 import { getUserDisplayName, getUserOwesName } from '../utils/userHelpers';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { SkeletonText, Skeleton } from '../components/Skeleton';
+import toast from 'react-hot-toast';
 
 // ========================================
 // MAIN COMPONENT
@@ -28,10 +32,11 @@ function PlanDetails() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState('');
-  const [currentView, setCurrentView] = useState('task'); // 'task' or 'activity'
-  const [selectedDay, setSelectedDay] = useState(null); // For day details modal
-  const [expandedScheduling, setExpandedScheduling] = useState(null); // Which activity's scheduling is expanded
-  const [tempSuggestions, setTempSuggestions] = useState({}); // Temp date/time inputs per activity
+  const [currentView, setCurrentView] = useState('task');
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [expandedScheduling, setExpandedScheduling] = useState(null);
+  const [tempSuggestions, setTempSuggestions] = useState({});
+  const { colors } = useTheme();
 
   // Expense tracking state
   const [expenses, setExpenses] = useState([]);
@@ -41,15 +46,15 @@ function PlanDetails() {
     amount: '',
     category: 'food',
     paidBy: '',
-    splitType: 'even', // 'even', 'custom', 'none'
-    splitWith: [], // Array of user IDs
-    customSplits: {} // For custom split amounts
+    splitType: 'even',
+    splitWith: [],
+    customSplits: {}
   });
   const [editingExpenseId, setEditingExpenseId] = useState(null);
   const [viewExpenses, setViewExpenses] = useState(false);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState('tasks'); // 'invite', 'members', 'calendar', 'tasks', 'expenses'
+  const [activeTab, setActiveTab] = useState('tasks');
 
   // User profiles
   const { profiles } = useUserProfiles(plan?.members || []);
@@ -71,14 +76,12 @@ function PlanDetails() {
   // ========================================
   const fetchPlanAndActivities = async () => {
     try {
-      // Fetch plan details
       const planDoc = await getDoc(doc(db, 'plans', planId));
       if (planDoc.exists()) {
         const planData = { id: planDoc.id, ...planDoc.data() };
 
-        // Check if current user is a member
         if (!planData.members.includes(auth.currentUser.uid)) {
-          alert('You are no longer a member of this plan');
+          toast.error('You are no longer a member of this plan');
           navigate('/dashboard');
           return;
         }
@@ -86,7 +89,6 @@ function PlanDetails() {
         setPlan(planData);
       }
 
-      // Fetch activities for this plan
       const q = query(collection(db, 'activities'), where('planId', '==', planId));
       const querySnapshot = await getDocs(q);
       const activitiesData = querySnapshot.docs.map(doc => ({
@@ -96,6 +98,7 @@ function PlanDetails() {
       setActivities(activitiesData);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load plan data');
     } finally {
       setLoading(false);
     }
@@ -126,13 +129,13 @@ function PlanDetails() {
       await addDoc(collection(db, 'activities'), {
         planId: planId,
         title: newActivity,
-        type: currentView, // 'task' or 'activity'
+        type: currentView,
         completed: false,
         createdBy: auth.currentUser.uid,
         createdAt: new Date(),
-        scheduledDate: null, // Admin-approved date
-        scheduledTime: null, // Admin-approved time
-        dateTimeSuggestions: [] // Array of {userId, userName, date, time, votes: [userId]}
+        scheduledDate: null,
+        scheduledTime: null,
+        dateTimeSuggestions: []
       });
 
       const activityTitle = newActivity;
@@ -141,11 +144,12 @@ function PlanDetails() {
       setNewActivity('');
       await fetchPlanAndActivities();
 
-      // Show expense prompt
+      toast.success(`${currentView === 'task' ? 'Task' : 'Activity'} added!`);
       setLastCreatedActivity({ title: activityTitle, type: activityType });
       setShowExpensePrompt(true);
     } catch (error) {
       console.error('Error adding activity:', error);
+      toast.error('Failed to add activity');
     }
   };
 
@@ -157,17 +161,20 @@ function PlanDetails() {
       fetchPlanAndActivities();
     } catch (error) {
       console.error('Error updating activity:', error);
+      toast.error('Failed to update task');
     }
   };
 
   const handleDeleteActivity = async (activityId) => {
     if (!window.confirm('Delete this task?')) return;
-    
+
     try {
       await deleteDoc(doc(db, 'activities', activityId));
       fetchPlanAndActivities();
+      toast.success('Task deleted');
     } catch (error) {
       console.error('Error deleting activity:', error);
+      toast.error('Failed to delete task');
     }
   };
 
@@ -181,7 +188,7 @@ function PlanDetails() {
 
   const handleSaveEdit = async (activityId) => {
     if (!editingText.trim()) return;
-    
+
     try {
       await updateDoc(doc(db, 'activities', activityId), {
         title: editingText
@@ -189,8 +196,10 @@ function PlanDetails() {
       setEditingId(null);
       setEditingText('');
       fetchPlanAndActivities();
+      toast.success('Task updated');
     } catch (error) {
       console.error('Error updating activity:', error);
+      toast.error('Failed to update task');
     }
   };
 
@@ -204,7 +213,7 @@ function PlanDetails() {
   // ========================================
   const handleSuggestDateTime = async (activityId, date, time) => {
     if (!date) {
-      alert('Please select a date');
+      toast.error('Please select a date');
       return;
     }
 
@@ -218,7 +227,7 @@ function PlanDetails() {
         userName: displayName,
         date: date,
         time: time || '',
-        votes: [auth.currentUser.uid], // Auto-vote for own suggestion
+        votes: [auth.currentUser.uid],
         createdAt: new Date()
       };
 
@@ -228,11 +237,11 @@ function PlanDetails() {
         dateTimeSuggestions: updatedSuggestions
       });
 
-      alert('Date/time suggestion added!');
+      toast.success('Suggestion added!');
       fetchPlanAndActivities();
     } catch (error) {
       console.error('Error suggesting date/time:', error);
-      alert('Error adding suggestion: ' + error.message);
+      toast.error('Error adding suggestion');
     }
   };
 
@@ -242,7 +251,6 @@ function PlanDetails() {
       const suggestions = [...(activity.dateTimeSuggestions || [])];
       const suggestion = suggestions[suggestionIndex];
 
-      // Toggle vote
       if (suggestion.votes.includes(auth.currentUser.uid)) {
         suggestion.votes = suggestion.votes.filter(uid => uid !== auth.currentUser.uid);
       } else {
@@ -256,6 +264,7 @@ function PlanDetails() {
       fetchPlanAndActivities();
     } catch (error) {
       console.error('Error voting:', error);
+      toast.error('Failed to vote');
     }
   };
 
@@ -271,11 +280,11 @@ function PlanDetails() {
         scheduledTime: suggestion.time
       });
 
-      alert('Activity scheduled!');
+      toast.success('Activity scheduled!');
       fetchPlanAndActivities();
     } catch (error) {
       console.error('Error approving suggestion:', error);
-      alert('Error scheduling: ' + error.message);
+      toast.error('Error scheduling activity');
     }
   };
 
@@ -288,9 +297,11 @@ function PlanDetails() {
         scheduledTime: null
       });
 
+      toast.success('Activity unscheduled');
       fetchPlanAndActivities();
     } catch (error) {
       console.error('Error unscheduling:', error);
+      toast.error('Failed to unschedule');
     }
   };
 
@@ -301,7 +312,7 @@ function PlanDetails() {
     e.preventDefault();
 
     if (!expenseFormData.description.trim() || !expenseFormData.amount || !expenseFormData.paidBy) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -322,13 +333,12 @@ function PlanDetails() {
 
       if (editingExpenseId) {
         await updateDoc(doc(db, 'expenses', editingExpenseId), expenseData);
-        alert('Expense updated!');
+        toast.success('Expense updated!');
       } else {
         await addDoc(collection(db, 'expenses'), expenseData);
-        alert('Expense added!');
+        toast.success('Expense added!');
       }
 
-      // Reset form
       setExpenseFormData({
         description: '',
         amount: '',
@@ -343,7 +353,7 @@ function PlanDetails() {
       fetchExpenses();
     } catch (error) {
       console.error('Error saving expense:', error);
-      alert('Error saving expense: ' + error.message);
+      toast.error('Error saving expense');
     }
   };
 
@@ -366,29 +376,22 @@ function PlanDetails() {
 
     try {
       await deleteDoc(doc(db, 'expenses', expenseId));
-      alert('Expense deleted!');
+      toast.success('Expense deleted!');
       fetchExpenses();
     } catch (error) {
       console.error('Error deleting expense:', error);
-      alert('Error deleting expense: ' + error.message);
+      toast.error('Error deleting expense');
     }
   };
 
   const calculateSettlements = () => {
-    // Calculate who owes whom
     const balances = {};
-
-    // Initialize balances for all members
     plan.members.forEach(memberId => {
       balances[memberId] = 0;
     });
 
-    // Calculate balances
     expenses.forEach(expense => {
-      if (expense.splitType === 'none') {
-        // Personal expense, no split
-        return;
-      }
+      if (expense.splitType === 'none') return;
 
       const totalAmount = expense.amount;
       const payer = expense.paidBy;
@@ -396,7 +399,6 @@ function PlanDetails() {
 
       if (expense.splitType === 'even') {
         const sharePerPerson = totalAmount / splitWithCount;
-
         expense.splitWith.forEach(memberId => {
           if (memberId === payer) {
             balances[payer] += totalAmount - sharePerPerson;
@@ -405,11 +407,6 @@ function PlanDetails() {
           }
         });
       } else if (expense.splitType === 'custom') {
-        let totalShares = 0;
-        Object.values(expense.customSplits).forEach(share => {
-          totalShares += parseFloat(share || 0);
-        });
-
         Object.entries(expense.customSplits).forEach(([memberId, share]) => {
           const amount = parseFloat(share || 0);
           if (memberId === payer) {
@@ -421,7 +418,6 @@ function PlanDetails() {
       }
     });
 
-    // Simplify settlements (minimize transactions)
     const settlements = [];
     const debtors = [];
     const creditors = [];
@@ -434,7 +430,6 @@ function PlanDetails() {
       }
     });
 
-    // Match debtors with creditors
     let i = 0, j = 0;
     while (i < debtors.length && j < creditors.length) {
       const debtor = debtors[i];
@@ -457,11 +452,6 @@ function PlanDetails() {
     return settlements;
   };
 
-  const getMemberEmail = (userId) => {
-    // This is a simplified version - you might want to fetch user emails from a users collection
-    return userId === auth.currentUser.uid ? 'You' : userId;
-  };
-
   // ========================================
   // PLAN MANAGEMENT HANDLERS
   // ========================================
@@ -471,7 +461,6 @@ function PlanDetails() {
     }
 
     try {
-      // Delete all activities first
       const activitiesQuery = query(collection(db, 'activities'), where('planId', '==', planId));
       const activitiesSnapshot = await getDocs(activitiesQuery);
 
@@ -480,15 +469,13 @@ function PlanDetails() {
       );
       await Promise.all(deletePromises);
 
-      // Delete the plan
       await deleteDoc(doc(db, 'plans', planId));
 
-      // Navigate back to dashboard
-      alert('Plan deleted successfully');
+      toast.success('Plan deleted successfully');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error deleting plan:', error);
-      alert('Error deleting plan: ' + error.message);
+      toast.error('Error deleting plan');
     }
   };
 
@@ -498,16 +485,15 @@ function PlanDetails() {
     }
 
     try {
-      // Remove current user from members array
       await updateDoc(doc(db, 'plans', planId), {
         members: arrayRemove(auth.currentUser.uid)
       });
 
-      alert('You have left the plan successfully');
+      toast.success('You have left the plan');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error leaving plan:', error);
-      alert('Error leaving plan: ' + error.message);
+      toast.error('Error leaving plan');
     }
   };
 
@@ -515,7 +501,6 @@ function PlanDetails() {
   // FILTER ACTIVITIES BY TYPE
   // ========================================
   const filteredActivities = activities.filter(activity => {
-    // For backward compatibility: if no type field, default to 'task'
     const activityType = activity.type || 'task';
     return activityType === currentView;
   });
@@ -523,11 +508,86 @@ function PlanDetails() {
   const taskCount = activities.filter(a => (a.type || 'task') === 'task').length;
   const activityCount = activities.filter(a => a.type === 'activity').length;
 
+  // Input styles
+  const inputStyle = {
+    padding: '12px 16px',
+    fontSize: '14px',
+    backgroundColor: colors.inputBg,
+    border: `1px solid ${colors.inputBorder}`,
+    borderRadius: '8px',
+    color: colors.text,
+    transition: 'all 0.2s ease',
+    outline: 'none',
+  };
+
   // ========================================
   // LOADING & ERROR STATES
   // ========================================
-  if (loading) return <div style={{ padding: '40px' }}>Loading...</div>;
-  if (!plan) return <div style={{ padding: '40px' }}>Plan not found</div>;
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: colors.background,
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '20px',
+        transition: 'background-color 0.3s ease',
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '1000px',
+          padding: '40px',
+          backgroundColor: colors.cardBg,
+          borderRadius: '12px',
+          boxShadow: `0 2px 8px ${colors.shadow}`,
+        }}>
+          <Skeleton width="60%" height="36px" style={{ marginBottom: '16px' }} />
+          <SkeletonText lines={2} style={{ marginBottom: '24px' }} />
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
+            {[1, 2, 3, 4, 5].map(i => (
+              <Skeleton key={i} width="120px" height="48px" borderRadius="8px" />
+            ))}
+          </div>
+          <SkeletonText lines={8} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: colors.background,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '40px',
+      }}>
+        <div style={{
+          textAlign: 'center',
+          color: colors.textSecondary,
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>404</div>
+          <h2 style={{ color: colors.text }}>Plan not found</h2>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{
+              marginTop: '16px',
+              padding: '12px 24px',
+              backgroundColor: colors.primary,
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+            }}
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ========================================
   // RENDER
@@ -535,126 +595,156 @@ function PlanDetails() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#f5f5f5',
+      backgroundColor: colors.background,
       display: 'flex',
       justifyContent: 'center',
-      padding: '20px'
+      padding: '20px',
+      transition: 'background-color 0.3s ease',
     }}>
+      <div
+        className="animate-fadeIn"
+        style={{
+          width: '100%',
+          maxWidth: '1000px',
+          padding: '40px',
+          backgroundColor: colors.cardBg,
+          borderRadius: '12px',
+          boxShadow: `0 2px 8px ${colors.shadow}`,
+          transition: 'all 0.3s ease',
+        }}
+      >
+
+      {/* NAVIGATION BAR */}
       <div style={{
-        width: '100%',
-        maxWidth: '1000px',
-        padding: '40px',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '12px',
       }}>
-      
-      {/* ========================================
-          NAVIGATION BAR
-          ======================================== */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <button
           onClick={() => navigate('/dashboard')}
           style={{
-            padding: '8px 16px',
-            backgroundColor: '#ddd',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
+            padding: '10px 20px',
+            backgroundColor: colors.backgroundTertiary,
+            color: colors.text,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '500',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = colors.backgroundTertiary;
           }}
         >
           ← Back to Dashboard
         </button>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <ThemeToggle />
           {plan.admin === auth.currentUser.uid ? (
             <button
               onClick={handleDeletePlan}
               style={{
-                padding: '8px 16px',
-                backgroundColor: '#f44336',
+                padding: '10px 20px',
+                backgroundColor: colors.danger,
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              🗑️ Delete Plan
+              Delete Plan
             </button>
           ) : (
             <button
               onClick={handleLeavePlan}
               style={{
-                padding: '8px 16px',
-                backgroundColor: '#FF9800',
+                padding: '10px 20px',
+                backgroundColor: colors.warning,
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              🚪 Leave Plan
+              Leave Plan
             </button>
           )}
         </div>
       </div>
 
-      {/* ========================================
-          PLAN HEADER
-          ======================================== */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <h1 style={{ margin: 0 }}>{plan.name}</h1>
+      {/* PLAN HEADER */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <h1 style={{ margin: 0, color: colors.text }}>{plan.name}</h1>
         {plan.admin === auth.currentUser.uid && (
           <span style={{
-            backgroundColor: '#4CAF50',
+            backgroundColor: colors.success,
             color: 'white',
-            padding: '4px 12px',
-            borderRadius: '12px',
+            padding: '6px 14px',
+            borderRadius: '14px',
             fontSize: '14px',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
           }}>
             ADMIN
           </span>
         )}
       </div>
-      {plan.description && <p style={{ color: '#666', marginTop: '10px' }}>{plan.description}</p>}
-      <p style={{ color: '#888' }}>📅 {plan.startDate} to {plan.endDate}</p>
+      {plan.description && <p style={{ color: colors.textSecondary, marginTop: '10px' }}>{plan.description}</p>}
+      <p style={{ color: colors.textMuted }}>📅 {plan.startDate} to {plan.endDate}</p>
 
-      {/* ========================================
-          TAB NAVIGATION
-          ======================================== */}
+      {/* TAB NAVIGATION */}
       <div style={{
         display: 'flex',
         gap: '0',
         marginTop: '30px',
         marginBottom: '30px',
-        borderBottom: '3px solid #e0e0e0',
-        overflowX: 'auto'
+        borderBottom: `3px solid ${colors.border}`,
+        overflowX: 'auto',
       }}>
         {[
-          { id: 'invite', label: '🔗 Invite', icon: '🔗' },
-          { id: 'members', label: '👥 Directory', icon: '👥' },
-          { id: 'calendar', label: '📅 Calendar', icon: '📅' },
-          { id: 'tasks', label: '📋 Tasks & Activities', icon: '📋' },
-          { id: 'expenses', label: '💰 Expenses', icon: '💰' }
+          { id: 'invite', label: 'Invite' },
+          { id: 'members', label: 'Directory' },
+          { id: 'calendar', label: 'Calendar' },
+          { id: 'tasks', label: 'Tasks & Activities' },
+          { id: 'expenses', label: 'Expenses' }
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
               padding: '15px 25px',
-              backgroundColor: activeTab === tab.id ? 'white' : 'transparent',
-              color: activeTab === tab.id ? '#2196F3' : '#666',
+              backgroundColor: activeTab === tab.id ? colors.cardBg : 'transparent',
+              color: activeTab === tab.id ? colors.primary : colors.textSecondary,
               border: 'none',
-              borderBottom: activeTab === tab.id ? '3px solid #2196F3' : '3px solid transparent',
+              borderBottom: activeTab === tab.id ? `3px solid ${colors.primary}` : '3px solid transparent',
               cursor: 'pointer',
               fontWeight: activeTab === tab.id ? 'bold' : 'normal',
               fontSize: '16px',
               transition: 'all 0.2s',
               whiteSpace: 'nowrap',
-              marginBottom: '-3px'
+              marginBottom: '-3px',
             }}
           >
             {tab.label}
@@ -662,34 +752,27 @@ function PlanDetails() {
         ))}
       </div>
 
-      {/* ========================================
-          INVITE TAB
-          ======================================== */}
+      {/* INVITE TAB */}
       {activeTab === 'invite' && (
-        <div>
+        <div className="animate-fadeIn">
           <InviteSection plan={plan} />
         </div>
       )}
 
-      {/* ========================================
-          MEMBERS TAB
-          ======================================== */}
+      {/* MEMBERS TAB */}
       {activeTab === 'members' && (
-        <div>
+        <div className="animate-fadeIn">
           <MemberDirectory plan={plan} />
           <div style={{ marginTop: '40px' }}>
-            <h3>Manage Members</h3>
+            <h3 style={{ color: colors.text }}>Manage Members</h3>
             <MembersList plan={plan} onMemberRemoved={fetchPlanAndActivities} />
           </div>
         </div>
       )}
 
-      {/* ========================================
-          CALENDAR TAB
-          ======================================== */}
+      {/* CALENDAR TAB */}
       {activeTab === 'calendar' && (
-        <div>
-
+        <div className="animate-fadeIn">
           <Calendar
             plan={plan}
             activities={activities}
@@ -698,15 +781,10 @@ function PlanDetails() {
         </div>
       )}
 
-      {/* ========================================
-          TASKS & ACTIVITIES TAB
-          ======================================== */}
+      {/* TASKS & ACTIVITIES TAB */}
       {activeTab === 'tasks' && (
-        <div>
+        <div className="animate-fadeIn">
 
-      {/* ========================================
-          DAY DETAILS MODAL
-          ======================================== */}
       {selectedDay && (
         <DayDetailsModal
           date={selectedDay}
@@ -717,29 +795,27 @@ function PlanDetails() {
         />
       )}
 
-      {/* ========================================
-          TASK TYPE TOGGLE
-          ======================================== */}
+      {/* TASK TYPE TOGGLE */}
       <div style={{
         display: 'flex',
         gap: '10px',
         marginTop: '30px',
         marginBottom: '20px',
-        borderBottom: '2px solid #e0e0e0',
-        paddingBottom: '0'
+        borderBottom: `2px solid ${colors.border}`,
+        paddingBottom: '0',
       }}>
         <button
           onClick={() => setCurrentView('task')}
           style={{
             padding: '12px 24px',
-            backgroundColor: currentView === 'task' ? '#2196F3' : 'transparent',
-            color: currentView === 'task' ? 'white' : '#666',
+            backgroundColor: currentView === 'task' ? colors.primary : 'transparent',
+            color: currentView === 'task' ? 'white' : colors.textSecondary,
             border: 'none',
-            borderBottom: currentView === 'task' ? '3px solid #2196F3' : '3px solid transparent',
+            borderBottom: currentView === 'task' ? `3px solid ${colors.primary}` : '3px solid transparent',
             cursor: 'pointer',
             fontWeight: 'bold',
             fontSize: '16px',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
           }}
         >
           ✓ Simple Tasks ({taskCount})
@@ -748,33 +824,32 @@ function PlanDetails() {
           onClick={() => setCurrentView('activity')}
           style={{
             padding: '12px 24px',
-            backgroundColor: currentView === 'activity' ? '#FF9800' : 'transparent',
-            color: currentView === 'activity' ? 'white' : '#666',
+            backgroundColor: currentView === 'activity' ? colors.warning : 'transparent',
+            color: currentView === 'activity' ? 'white' : colors.textSecondary,
             border: 'none',
-            borderBottom: currentView === 'activity' ? '3px solid #FF9800' : '3px solid transparent',
+            borderBottom: currentView === 'activity' ? `3px solid ${colors.warning}` : '3px solid transparent',
             cursor: 'pointer',
             fontWeight: 'bold',
             fontSize: '16px',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
           }}
         >
-          🎯 Activities ({activityCount})
+          Activities ({activityCount})
         </button>
       </div>
 
-      {/* ========================================
-          ADD TASK FORM
-          ======================================== */}
+      {/* ADD TASK FORM */}
       <div style={{
-        backgroundColor: currentView === 'task' ? '#e3f2fd' : '#fff3e0',
+        backgroundColor: currentView === 'task' ? `${colors.primary}15` : `${colors.warning}15`,
         padding: '20px',
-        borderRadius: '8px',
-        marginBottom: '30px'
+        borderRadius: '12px',
+        marginBottom: '30px',
+        border: `1px solid ${currentView === 'task' ? colors.primary : colors.warning}30`,
       }}>
-        <h2>
-          {currentView === 'task' ? '✓ Add Simple Task' : '🎯 Add Activity'}
+        <h2 style={{ color: colors.text, marginBottom: '8px' }}>
+          {currentView === 'task' ? '✓ Add Simple Task' : 'Add Activity'}
         </h2>
-        <p style={{ color: '#666', fontSize: '14px', marginTop: '5px' }}>
+        <p style={{ color: colors.textSecondary, fontSize: '14px', marginTop: '5px', marginBottom: '16px' }}>
           {currentView === 'task'
             ? 'Quick to-do items (e.g., "Pack sunscreen", "Download offline maps")'
             : 'Planned activities for your trip (e.g., "Visit Eiffel Tower", "Dinner at Italian restaurant")'}
@@ -785,18 +860,31 @@ function PlanDetails() {
             placeholder={currentView === 'task' ? 'New task...' : 'New activity...'}
             value={newActivity}
             onChange={(e) => setNewActivity(e.target.value)}
-            style={{ flex: 1, padding: '10px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ddd' }}
+            style={{ ...inputStyle, flex: 1 }}
+            onFocus={(e) => {
+              e.target.style.borderColor = currentView === 'task' ? colors.primary : colors.warning;
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = colors.inputBorder;
+            }}
           />
           <button
             type="submit"
             style={{
-              padding: '10px 20px',
-              backgroundColor: currentView === 'task' ? '#2196F3' : '#FF9800',
+              padding: '12px 24px',
+              backgroundColor: currentView === 'task' ? colors.primary : colors.warning,
               color: 'white',
               border: 'none',
-              borderRadius: '5px',
+              borderRadius: '8px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
             Add
@@ -804,53 +892,67 @@ function PlanDetails() {
         </form>
       </div>
 
-      {/* ========================================
-          TASKS LIST
-          ======================================== */}
-      <h2>
-        {currentView === 'task' ? '✓ Simple Tasks' : '🎯 Activities'} ({filteredActivities.length})
+      {/* TASKS LIST */}
+      <h2 style={{ color: colors.text }}>
+        {currentView === 'task' ? '✓ Simple Tasks' : 'Activities'} ({filteredActivities.length})
       </h2>
       {filteredActivities.length === 0 ? (
-        <p style={{ color: '#999', textAlign: 'center', padding: '40px' }}>
-          No {currentView === 'task' ? 'tasks' : 'activities'} yet. Add your first {currentView} above!
-        </p>
+        <div style={{
+          color: colors.textMuted,
+          textAlign: 'center',
+          padding: '60px 40px',
+          backgroundColor: colors.backgroundTertiary,
+          borderRadius: '12px',
+          border: `2px dashed ${colors.border}`,
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>
+            {currentView === 'task' ? '✓' : '🎯'}
+          </div>
+          <p style={{ margin: 0, fontSize: '16px' }}>
+            No {currentView === 'task' ? 'tasks' : 'activities'} yet. Add your first {currentView} above!
+          </p>
+        </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="animate-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredActivities.map(activity => {
             const activityType = activity.type || 'task';
             const isTask = activityType === 'task';
             const isScheduled = activity.scheduledDate;
             const suggestions = activity.dateTimeSuggestions || [];
             const isExpanded = expandedScheduling === activity.id;
+            const accentColor = isTask ? colors.primary : colors.warning;
 
             return (
             <div
               key={activity.id}
               style={{
-                padding: '15px',
-                backgroundColor: 'white',
-                border: `2px solid ${isTask ? '#2196F3' : '#FF9800'}`,
-                borderLeft: `6px solid ${isTask ? '#2196F3' : '#FF9800'}`,
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                padding: '16px',
+                backgroundColor: colors.cardBg,
+                border: `2px solid ${accentColor}40`,
+                borderLeft: `6px solid ${accentColor}`,
+                borderRadius: '12px',
+                boxShadow: `0 2px 8px ${colors.shadow}`,
+                transition: 'all 0.2s ease',
               }}
             >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '15px',
-              }}
-            >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '15px',
+            }}>
               <input
                 type="checkbox"
                 checked={activity.completed}
                 onChange={() => handleToggleComplete(activity.id, activity.completed)}
-                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  cursor: 'pointer',
+                  accentColor: accentColor,
+                }}
                 disabled={editingId === activity.id}
               />
-              
-              {/* EDITING MODE */}
+
               {editingId === activity.id ? (
                 <>
                   <input
@@ -858,11 +960,9 @@ function PlanDetails() {
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     style={{
+                      ...inputStyle,
                       flex: 1,
-                      padding: '8px',
-                      fontSize: '16px',
-                      border: '2px solid #4CAF50',
-                      borderRadius: '5px'
+                      borderColor: colors.success,
                     }}
                     autoFocus
                     onKeyDown={(e) => {
@@ -873,13 +973,13 @@ function PlanDetails() {
                   <button
                     onClick={() => handleSaveEdit(activity.id)}
                     style={{
-                      padding: '8px 15px',
-                      backgroundColor: '#4CAF50',
+                      padding: '8px 16px',
+                      backgroundColor: colors.success,
                       color: 'white',
                       border: 'none',
-                      borderRadius: '5px',
+                      borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontWeight: '500',
                     }}
                   >
                     Save
@@ -887,38 +987,40 @@ function PlanDetails() {
                   <button
                     onClick={handleCancelEdit}
                     style={{
-                      padding: '8px 15px',
-                      backgroundColor: '#999',
+                      padding: '8px 16px',
+                      backgroundColor: colors.textMuted,
                       color: 'white',
                       border: 'none',
-                      borderRadius: '5px',
+                      borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontWeight: '500',
                     }}
                   >
                     Cancel
                   </button>
                 </>
               ) : (
-                /* DISPLAY MODE */
                 <>
-                  <span style={{ 
+                  <span style={{
                     flex: 1,
                     textDecoration: activity.completed ? 'line-through' : 'none',
-                    color: activity.completed ? '#999' : '#333'
+                    color: activity.completed ? colors.textMuted : colors.text,
+                    fontSize: '16px',
                   }}>
                     {activity.title}
                   </span>
                   <button
                     onClick={() => handleStartEdit(activity)}
                     style={{
-                      padding: '5px 10px',
-                      backgroundColor: '#2196F3',
+                      padding: '8px 16px',
+                      backgroundColor: colors.primary,
                       color: 'white',
                       border: 'none',
-                      borderRadius: '5px',
+                      borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     Edit
@@ -926,13 +1028,15 @@ function PlanDetails() {
                   <button
                     onClick={() => handleDeleteActivity(activity.id)}
                     style={{
-                      padding: '5px 10px',
-                      backgroundColor: '#f44336',
+                      padding: '8px 16px',
+                      backgroundColor: colors.danger,
                       color: 'white',
                       border: 'none',
-                      borderRadius: '5px',
+                      borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     Delete
@@ -941,24 +1045,21 @@ function PlanDetails() {
               )}
             </div>
 
-            {/* ========================================
-                SCHEDULING SECTION
-                ======================================== */}
-            <div style={{ marginTop: '15px', borderTop: '1px solid #e0e0e0', paddingTop: '15px' }}>
-              {/* Scheduled badge */}
+            {/* SCHEDULING SECTION */}
+            <div style={{ marginTop: '15px', borderTop: `1px solid ${colors.border}`, paddingTop: '15px' }}>
               {isScheduled && (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
                   marginBottom: '10px',
-                  padding: '10px',
-                  backgroundColor: '#e8f5e9',
-                  borderRadius: '5px',
-                  border: '1px solid #4CAF50'
+                  padding: '12px',
+                  backgroundColor: colors.successLight,
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.success}`,
                 }}>
                   <span style={{ fontSize: '20px' }}>📅</span>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, color: colors.text }}>
                     <strong>Scheduled:</strong> {activity.scheduledDate}
                     {activity.scheduledTime && ` at ${activity.scheduledTime}`}
                   </div>
@@ -966,13 +1067,14 @@ function PlanDetails() {
                     <button
                       onClick={() => handleUnschedule(activity.id)}
                       style={{
-                        padding: '5px 10px',
-                        backgroundColor: '#f44336',
+                        padding: '6px 12px',
+                        backgroundColor: colors.danger,
                         color: 'white',
                         border: 'none',
-                        borderRadius: '5px',
+                        borderRadius: '6px',
                         cursor: 'pointer',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        fontWeight: '500',
                       }}
                     >
                       Unschedule
@@ -981,38 +1083,36 @@ function PlanDetails() {
                 </div>
               )}
 
-              {/* Schedule/Suggestions toggle button */}
               <button
                 onClick={() => setExpandedScheduling(isExpanded ? null : activity.id)}
                 style={{
-                  padding: '8px 16px',
-                  backgroundColor: isExpanded ? '#9C27B0' : '#E1BEE7',
-                  color: isExpanded ? 'white' : '#6A1B9A',
+                  padding: '10px 16px',
+                  backgroundColor: isExpanded ? colors.purple : colors.purpleLight,
+                  color: isExpanded ? 'white' : colors.purple,
                   border: 'none',
-                  borderRadius: '5px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
                   fontWeight: 'bold',
                   width: '100%',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 {isExpanded ? '▼' : '▶'} Date/Time Suggestions ({suggestions.length})
               </button>
 
-              {/* Expanded scheduling UI */}
               {isExpanded && (
                 <div style={{
                   marginTop: '15px',
-                  padding: '15px',
-                  backgroundColor: '#f3e5f5',
-                  borderRadius: '8px'
+                  padding: '16px',
+                  backgroundColor: colors.purpleLight,
+                  borderRadius: '12px',
                 }}>
-                  {/* Add suggestion form */}
                   <div style={{ marginBottom: '20px' }}>
-                    <h4 style={{ marginTop: 0, marginBottom: '10px' }}>Suggest Date & Time</h4>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '5px' }}>
+                    <h4 style={{ marginTop: 0, marginBottom: '12px', color: colors.text }}>Suggest Date & Time</h4>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: '12px', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
                           Date *
                         </label>
                         <input
@@ -1024,17 +1124,11 @@ function PlanDetails() {
                           })}
                           min={plan.startDate}
                           max={plan.endDate}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            fontSize: '14px',
-                            border: '1px solid #ddd',
-                            borderRadius: '5px'
-                          }}
+                          style={{ ...inputStyle, width: '100%' }}
                         />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '5px' }}>
+                      <div style={{ flex: 1, minWidth: '150px' }}>
+                        <label style={{ fontSize: '12px', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
                           Time (optional)
                         </label>
                         <input
@@ -1044,13 +1138,7 @@ function PlanDetails() {
                             ...tempSuggestions,
                             [activity.id]: { ...tempSuggestions[activity.id], time: e.target.value }
                           })}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            fontSize: '14px',
-                            border: '1px solid #ddd',
-                            borderRadius: '5px'
-                          }}
+                          style={{ ...inputStyle, width: '100%' }}
                         />
                       </div>
                       <button
@@ -1063,18 +1151,18 @@ function PlanDetails() {
                               [activity.id]: { date: '', time: '' }
                             });
                           } else {
-                            alert('Please select a date');
+                            toast.error('Please select a date');
                           }
                         }}
                         style={{
-                          padding: '8px 16px',
-                          backgroundColor: '#9C27B0',
+                          padding: '12px 20px',
+                          backgroundColor: colors.purple,
                           color: 'white',
                           border: 'none',
-                          borderRadius: '5px',
+                          borderRadius: '8px',
                           cursor: 'pointer',
                           fontWeight: 'bold',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         Add Suggestion
@@ -1082,14 +1170,13 @@ function PlanDetails() {
                     </div>
                   </div>
 
-                  {/* List of suggestions */}
                   {suggestions.length === 0 ? (
-                    <p style={{ color: '#999', textAlign: 'center', margin: '20px 0' }}>
+                    <p style={{ color: colors.textMuted, textAlign: 'center', margin: '20px 0' }}>
                       No suggestions yet. Be the first to suggest a date/time!
                     </p>
                   ) : (
                     <div>
-                      <h4 style={{ marginTop: 0, marginBottom: '10px' }}>Suggestions & Votes</h4>
+                      <h4 style={{ marginTop: 0, marginBottom: '12px', color: colors.text }}>Suggestions & Votes</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {suggestions.map((suggestion, index) => {
                           const hasVoted = suggestion.votes?.includes(auth.currentUser.uid);
@@ -1099,66 +1186,62 @@ function PlanDetails() {
                             <div
                               key={index}
                               style={{
-                                padding: '12px',
-                                backgroundColor: 'white',
-                                borderRadius: '8px',
-                                border: '1px solid #ddd',
+                                padding: '14px',
+                                backgroundColor: colors.cardBg,
+                                borderRadius: '10px',
+                                border: `1px solid ${colors.border}`,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '15px'
+                                gap: '15px',
+                                flexWrap: 'wrap',
                               }}
                             >
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                              <div style={{ flex: 1, minWidth: '200px' }}>
+                                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: colors.text }}>
                                   📅 {suggestion.date}
                                   {suggestion.time && ` ⏰ ${suggestion.time}`}
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#666' }}>
+                                <div style={{ fontSize: '12px', color: colors.textSecondary }}>
                                   Suggested by: {getUserDisplayName(suggestion.userId, profiles, auth.currentUser.uid)}
                                 </div>
                               </div>
 
-                              <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px'
-                              }}>
-                                {/* Vote button */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <button
                                   onClick={() => handleVoteSuggestion(activity.id, index)}
                                   style={{
-                                    padding: '8px 12px',
-                                    backgroundColor: hasVoted ? '#4CAF50' : '#e0e0e0',
-                                    color: hasVoted ? 'white' : '#333',
+                                    padding: '8px 14px',
+                                    backgroundColor: hasVoted ? colors.success : colors.backgroundTertiary,
+                                    color: hasVoted ? 'white' : colors.text,
                                     border: 'none',
-                                    borderRadius: '5px',
+                                    borderRadius: '8px',
                                     cursor: 'pointer',
                                     fontWeight: 'bold',
                                     fontSize: '14px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '5px'
+                                    gap: '5px',
+                                    transition: 'all 0.2s ease',
                                   }}
                                 >
                                   {hasVoted ? '✓' : '+'} {voteCount}
                                 </button>
 
-                                {/* Admin approve button */}
                                 {plan.admin === auth.currentUser.uid && (
                                   <button
                                     onClick={() => handleApproveSuggestion(activity.id, index)}
                                     style={{
-                                      padding: '8px 12px',
-                                      backgroundColor: '#2196F3',
+                                      padding: '8px 14px',
+                                      backgroundColor: colors.primary,
                                       color: 'white',
                                       border: 'none',
-                                      borderRadius: '5px',
+                                      borderRadius: '8px',
                                       cursor: 'pointer',
                                       fontWeight: 'bold',
-                                      fontSize: '12px'
+                                      fontSize: '12px',
                                     }}
                                   >
-                                    ✓ Approve & Schedule
+                                    ✓ Approve
                                   </button>
                                 )}
                               </div>
@@ -1180,433 +1263,415 @@ function PlanDetails() {
         </div>
       )}
 
-      {/* ========================================
-          EXPENSES TAB
-          ======================================== */}
+      {/* EXPENSES TAB */}
       {activeTab === 'expenses' && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ margin: 0 }}>💰 Expense Tracking</h2>
+        <div className="animate-fadeIn">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <h2 style={{ margin: 0, color: colors.text }}>Expense Tracking</h2>
             <button
               onClick={() => setViewExpenses(!viewExpenses)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            {viewExpenses ? 'Hide' : 'Show'} Expenses ({expenses.length})
-          </button>
-        </div>
-
-        {viewExpenses && (
-          <>
-            {/* Add Expense Button */}
-            <button
-              onClick={() => {
-                setShowExpenseForm(!showExpenseForm);
-                setEditingExpenseId(null);
-                setExpenseFormData({
-                  description: '',
-                  amount: '',
-                  category: 'food',
-                  paidBy: auth.currentUser.uid,
-                  splitType: 'even',
-                  splitWith: [],
-                  customSplits: {}
-                });
-              }}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#2196F3',
+                backgroundColor: colors.success,
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
-                fontSize: '16px',
-                marginBottom: '20px',
-                width: '100%'
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              {showExpenseForm ? '✕ Cancel' : '+ Add Expense'}
+              {viewExpenses ? 'Hide' : 'Show'} Expenses ({expenses.length})
             </button>
+          </div>
 
-            {/* Add/Edit Expense Form */}
-            {showExpenseForm && (
-              <div style={{
-                backgroundColor: 'white',
-                padding: '25px',
-                borderRadius: '8px',
-                marginBottom: '25px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}>
-                <h3 style={{ marginTop: 0 }}>{editingExpenseId ? 'Edit' : 'Add'} Expense</h3>
-                <form onSubmit={handleAddExpense}>
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                      Description *
-                    </label>
-                    <input
-                      type="text"
-                      value={expenseFormData.description}
-                      onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
-                      placeholder="e.g., Dinner at restaurant, Hotel booking"
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        fontSize: '14px',
-                        border: '1px solid #ddd',
-                        borderRadius: '5px'
-                      }}
-                    />
-                  </div>
+          {viewExpenses && (
+            <>
+              <button
+                onClick={() => {
+                  setShowExpenseForm(!showExpenseForm);
+                  setEditingExpenseId(null);
+                  setExpenseFormData({
+                    description: '',
+                    amount: '',
+                    category: 'food',
+                    paidBy: auth.currentUser.uid,
+                    splitType: 'even',
+                    splitWith: [],
+                    customSplits: {}
+                  });
+                }}
+                style={{
+                  padding: '14px 24px',
+                  backgroundColor: colors.primary,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  marginBottom: '20px',
+                  width: '100%',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {showExpenseForm ? '✕ Cancel' : '+ Add Expense'}
+              </button>
 
-                  <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                        Amount ($) *
+              {showExpenseForm && (
+                <div style={{
+                  backgroundColor: colors.cardBg,
+                  padding: '25px',
+                  borderRadius: '12px',
+                  marginBottom: '25px',
+                  boxShadow: `0 2px 8px ${colors.shadow}`,
+                  border: `1px solid ${colors.border}`,
+                }}>
+                  <h3 style={{ marginTop: 0, color: colors.text }}>{editingExpenseId ? 'Edit' : 'Add'} Expense</h3>
+                  <form onSubmit={handleAddExpense}>
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: colors.text }}>
+                        Description *
                       </label>
                       <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={expenseFormData.amount}
-                        onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
-                        placeholder="0.00"
+                        type="text"
+                        value={expenseFormData.description}
+                        onChange={(e) => setExpenseFormData({...expenseFormData, description: e.target.value})}
+                        placeholder="e.g., Dinner at restaurant, Hotel booking"
                         required
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          fontSize: '14px',
-                          border: '1px solid #ddd',
-                          borderRadius: '5px'
-                        }}
+                        style={{ ...inputStyle, width: '100%' }}
                       />
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                        Category
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '200px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: colors.text }}>
+                          Amount ($) *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={expenseFormData.amount}
+                          onChange={(e) => setExpenseFormData({...expenseFormData, amount: e.target.value})}
+                          placeholder="0.00"
+                          required
+                          style={{ ...inputStyle, width: '100%' }}
+                        />
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: '200px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: colors.text }}>
+                          Category
+                        </label>
+                        <select
+                          value={expenseFormData.category}
+                          onChange={(e) => setExpenseFormData({...expenseFormData, category: e.target.value})}
+                          style={{ ...inputStyle, width: '100%' }}
+                        >
+                          <option value="food">🍔 Food & Dining</option>
+                          <option value="lodging">🏨 Lodging</option>
+                          <option value="transport">🚗 Transportation</option>
+                          <option value="activities">🎯 Activities & Entertainment</option>
+                          <option value="shopping">🛍️ Shopping</option>
+                          <option value="other">📦 Other</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: colors.text }}>
+                        Paid By *
                       </label>
                       <select
-                        value={expenseFormData.category}
-                        onChange={(e) => setExpenseFormData({...expenseFormData, category: e.target.value})}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          fontSize: '14px',
-                          border: '1px solid #ddd',
-                          borderRadius: '5px'
-                        }}
+                        value={expenseFormData.paidBy}
+                        onChange={(e) => setExpenseFormData({...expenseFormData, paidBy: e.target.value})}
+                        required
+                        style={{ ...inputStyle, width: '100%' }}
                       >
-                        <option value="food">🍔 Food & Dining</option>
-                        <option value="lodging">🏨 Lodging</option>
-                        <option value="transport">🚗 Transportation</option>
-                        <option value="activities">🎯 Activities & Entertainment</option>
-                        <option value="shopping">🛍️ Shopping</option>
-                        <option value="other">📦 Other</option>
+                        <option value="">Select who paid</option>
+                        {plan.members.map(memberId => (
+                          <option key={memberId} value={memberId}>
+                            {getUserDisplayName(memberId, profiles, auth.currentUser.uid)}
+                          </option>
+                        ))}
                       </select>
                     </div>
-                  </div>
 
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                      Paid By *
-                    </label>
-                    <select
-                      value={expenseFormData.paidBy}
-                      onChange={(e) => setExpenseFormData({...expenseFormData, paidBy: e.target.value})}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        fontSize: '14px',
-                        border: '1px solid #ddd',
-                        borderRadius: '5px'
-                      }}
-                    >
-                      <option value="">Select who paid</option>
-                      {plan.members.map(memberId => (
-                        <option key={memberId} value={memberId}>
-                          {getUserDisplayName(memberId, profiles, auth.currentUser.uid)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                      Split Type
-                    </label>
-                    <select
-                      value={expenseFormData.splitType}
-                      onChange={(e) => setExpenseFormData({...expenseFormData, splitType: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        fontSize: '14px',
-                        border: '1px solid #ddd',
-                        borderRadius: '5px'
-                      }}
-                    >
-                      <option value="even">Split Evenly (All Members)</option>
-                      <option value="custom">Custom Split</option>
-                      <option value="none">Personal Expense (No Split)</option>
-                    </select>
-                  </div>
-
-                  {expenseFormData.splitType === 'custom' && (
-                    <div style={{
-                      padding: '15px',
-                      backgroundColor: '#f9f9f9',
-                      borderRadius: '5px',
-                      marginBottom: '15px'
-                    }}>
-                      <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
-                        Custom Splits (enter amounts per person)
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: colors.text }}>
+                        Split Type
                       </label>
-                      {plan.members.map(memberId => (
-                        <div key={memberId} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <label style={{ flex: 1 }}>
-                            {getUserDisplayName(memberId, profiles, auth.currentUser.uid)}
-                          </label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={expenseFormData.customSplits[memberId] || ''}
-                            onChange={(e) => setExpenseFormData({
-                              ...expenseFormData,
-                              customSplits: {...expenseFormData.customSplits, [memberId]: e.target.value}
-                            })}
-                            placeholder="0.00"
-                            style={{
-                              width: '120px',
-                              padding: '8px',
-                              fontSize: '14px',
-                              border: '1px solid #ddd',
-                              borderRadius: '5px'
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      type="submit"
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        backgroundColor: '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        fontSize: '16px'
-                      }}
-                    >
-                      {editingExpenseId ? 'Update' : 'Add'} Expense
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowExpenseForm(false);
-                        setEditingExpenseId(null);
-                      }}
-                      style={{
-                        padding: '12px 24px',
-                        backgroundColor: '#999',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Expense List */}
-            <div style={{ marginBottom: '30px' }}>
-              <h3>All Expenses</h3>
-              {expenses.length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#999', padding: '40px' }}>
-                  No expenses yet. Add your first expense above!
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {expenses.map(expense => {
-                    const categoryIcons = {
-                      food: '🍔',
-                      lodging: '🏨',
-                      transport: '🚗',
-                      activities: '🎯',
-                      shopping: '🛍️',
-                      other: '📦'
-                    };
-
-                    return (
-                      <div
-                        key={expense.id}
-                        style={{
-                          padding: '20px',
-                          backgroundColor: 'white',
-                          borderRadius: '8px',
-                          border: '1px solid #ddd',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}
+                      <select
+                        value={expenseFormData.splitType}
+                        onChange={(e) => setExpenseFormData({...expenseFormData, splitType: e.target.value})}
+                        style={{ ...inputStyle, width: '100%' }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                              <span style={{ fontSize: '24px' }}>{categoryIcons[expense.category]}</span>
-                              <h4 style={{ margin: 0 }}>{expense.description}</h4>
-                            </div>
-                            <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>
-                              <strong style={{ fontSize: '20px', color: '#4CAF50' }}>
-                                ${expense.amount.toFixed(2)}
-                              </strong>
-                              {' • '}
-                              Paid by: {getUserDisplayName(expense.paidBy, profiles, auth.currentUser.uid)}
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#888' }}>
-                              Split: {expense.splitType === 'even' ? 'Evenly among all' :
-                                      expense.splitType === 'custom' ? 'Custom split' :
-                                      'Personal expense'}
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', gap: '10px' }}>
-                            <button
-                              onClick={() => handleEditExpense(expense)}
-                              style={{
-                                padding: '6px 12px',
-                                backgroundColor: '#2196F3',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                fontSize: '12px'
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteExpense(expense.id)}
-                              style={{
-                                padding: '6px 12px',
-                                backgroundColor: '#f44336',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                fontSize: '12px'
-                              }}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                        <option value="even">Split Evenly (All Members)</option>
+                        <option value="custom">Custom Split</option>
+                        <option value="none">Personal Expense (No Split)</option>
+                      </select>
+                    </div>
 
-            {/* Settlement Summary */}
-            {expenses.length > 0 && (
-              <div style={{
-                backgroundColor: '#fff3e0',
-                padding: '25px',
-                borderRadius: '8px',
-                border: '2px solid #FF9800'
-              }}>
-                <h3 style={{ marginTop: 0 }}>💸 Who Owes Whom</h3>
-                {(() => {
-                  const settlements = calculateSettlements();
-
-                  if (settlements.length === 0) {
-                    return <p style={{ color: '#666' }}>All settled up! No one owes anyone.</p>;
-                  }
-
-                  // Calculate total expenses
-                  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-
-                  return (
-                    <>
-                      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: 'white', borderRadius: '5px' }}>
-                        <strong>Total Trip Expenses: ${totalExpenses.toFixed(2)}</strong>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {settlements.map((settlement, index) => (
-                          <div
-                            key={index}
-                            style={{
-                              padding: '15px',
-                              backgroundColor: 'white',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '15px',
-                              border: '1px solid #ddd'
-                            }}
-                          >
-                            <div style={{ flex: 1 }}>
-                              <strong>{getUserDisplayName(settlement.from, profiles, auth.currentUser.uid)}</strong>
-                              {' '}owes{' '}
-                              <strong>{getUserOwesName(settlement.to, profiles, auth.currentUser.uid)}</strong>
-                            </div>
-                            <div style={{
-                              padding: '8px 16px',
-                              backgroundColor: '#4CAF50',
-                              color: 'white',
-                              borderRadius: '20px',
-                              fontWeight: 'bold',
-                              fontSize: '16px'
-                            }}>
-                              ${settlement.amount.toFixed(2)}
-                            </div>
+                    {expenseFormData.splitType === 'custom' && (
+                      <div style={{
+                        padding: '16px',
+                        backgroundColor: colors.backgroundTertiary,
+                        borderRadius: '10px',
+                        marginBottom: '16px',
+                      }}>
+                        <label style={{ display: 'block', marginBottom: '12px', fontWeight: '500', color: colors.text }}>
+                          Custom Splits (enter amounts per person)
+                        </label>
+                        {plan.members.map(memberId => (
+                          <div key={memberId} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <label style={{ flex: 1, color: colors.textSecondary }}>
+                              {getUserDisplayName(memberId, profiles, auth.currentUser.uid)}
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={expenseFormData.customSplits[memberId] || ''}
+                              onChange={(e) => setExpenseFormData({
+                                ...expenseFormData,
+                                customSplits: {...expenseFormData.customSplits, [memberId]: e.target.value}
+                              })}
+                              placeholder="0.00"
+                              style={{ ...inputStyle, width: '120px' }}
+                            />
                           </div>
                         ))}
                       </div>
+                    )}
 
-                      <div style={{
-                        marginTop: '20px',
-                        padding: '15px',
-                        backgroundColor: 'white',
-                        borderRadius: '5px',
-                        fontSize: '14px',
-                        color: '#666'
-                      }}>
-                        💡 Tip: These settlements are optimized to minimize the number of transactions needed.
-                      </div>
-                    </>
-                  );
-                })()}
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        type="submit"
+                        style={{
+                          flex: 1,
+                          padding: '14px',
+                          backgroundColor: colors.success,
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          fontSize: '16px',
+                        }}
+                      >
+                        {editingExpenseId ? 'Update' : 'Add'} Expense
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowExpenseForm(false);
+                          setEditingExpenseId(null);
+                        }}
+                        style={{
+                          padding: '14px 28px',
+                          backgroundColor: colors.textMuted,
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Expense List */}
+              <div style={{ marginBottom: '30px' }}>
+                <h3 style={{ color: colors.text }}>All Expenses</h3>
+                {expenses.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    color: colors.textMuted,
+                    padding: '60px 40px',
+                    backgroundColor: colors.backgroundTertiary,
+                    borderRadius: '12px',
+                    border: `2px dashed ${colors.border}`,
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>💰</div>
+                    <p style={{ margin: 0 }}>No expenses yet. Add your first expense above!</p>
+                  </div>
+                ) : (
+                  <div className="animate-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {expenses.map(expense => {
+                      const categoryIcons = {
+                        food: '🍔',
+                        lodging: '🏨',
+                        transport: '🚗',
+                        activities: '🎯',
+                        shopping: '🛍️',
+                        other: '📦'
+                      };
+
+                      return (
+                        <div
+                          key={expense.id}
+                          style={{
+                            padding: '20px',
+                            backgroundColor: colors.cardBg,
+                            borderRadius: '12px',
+                            border: `1px solid ${colors.border}`,
+                            boxShadow: `0 2px 8px ${colors.shadow}`,
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '12px' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '24px' }}>{categoryIcons[expense.category]}</span>
+                                <h4 style={{ margin: 0, color: colors.text }}>{expense.description}</h4>
+                              </div>
+                              <div style={{ color: colors.textSecondary, fontSize: '14px', marginBottom: '8px' }}>
+                                <strong style={{ fontSize: '20px', color: colors.success }}>
+                                  ${expense.amount.toFixed(2)}
+                                </strong>
+                                {' • '}
+                                Paid by: {getUserDisplayName(expense.paidBy, profiles, auth.currentUser.uid)}
+                              </div>
+                              <div style={{ fontSize: '12px', color: colors.textMuted }}>
+                                Split: {expense.splitType === 'even' ? 'Evenly among all' :
+                                        expense.splitType === 'custom' ? 'Custom split' :
+                                        'Personal expense'}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                              <button
+                                onClick={() => handleEditExpense(expense)}
+                                style={{
+                                  padding: '8px 16px',
+                                  backgroundColor: colors.primary,
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: '500',
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteExpense(expense.id)}
+                                style={{
+                                  padding: '8px 16px',
+                                  backgroundColor: colors.danger,
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  fontWeight: '500',
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </>
-        )}
+
+              {/* Settlement Summary */}
+              {expenses.length > 0 && (
+                <div style={{
+                  backgroundColor: colors.warningLight,
+                  padding: '25px',
+                  borderRadius: '12px',
+                  border: `2px solid ${colors.warning}`,
+                }}>
+                  <h3 style={{ marginTop: 0, color: colors.text }}>Who Owes Whom</h3>
+                  {(() => {
+                    const settlements = calculateSettlements();
+
+                    if (settlements.length === 0) {
+                      return <p style={{ color: colors.textSecondary }}>All settled up! No one owes anyone.</p>;
+                    }
+
+                    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+                    return (
+                      <>
+                        <div style={{
+                          marginBottom: '20px',
+                          padding: '16px',
+                          backgroundColor: colors.cardBg,
+                          borderRadius: '10px',
+                        }}>
+                          <strong style={{ color: colors.text }}>Total Trip Expenses: ${totalExpenses.toFixed(2)}</strong>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {settlements.map((settlement, index) => (
+                            <div
+                              key={index}
+                              style={{
+                                padding: '16px',
+                                backgroundColor: colors.cardBg,
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                border: `1px solid ${colors.border}`,
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <div style={{ flex: 1, color: colors.text }}>
+                                <strong>{getUserDisplayName(settlement.from, profiles, auth.currentUser.uid)}</strong>
+                                {' '}owes{' '}
+                                <strong>{getUserOwesName(settlement.to, profiles, auth.currentUser.uid)}</strong>
+                              </div>
+                              <div style={{
+                                padding: '10px 20px',
+                                backgroundColor: colors.success,
+                                color: 'white',
+                                borderRadius: '20px',
+                                fontWeight: 'bold',
+                                fontSize: '16px',
+                              }}>
+                                ${settlement.amount.toFixed(2)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{
+                          marginTop: '20px',
+                          padding: '16px',
+                          backgroundColor: colors.cardBg,
+                          borderRadius: '10px',
+                          fontSize: '14px',
+                          color: colors.textSecondary,
+                        }}>
+                          💡 Tip: These settlements are optimized to minimize the number of transactions needed.
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
-      {/* ========================================
-          DAY DETAILS MODAL
-          ======================================== */}
+      {/* DAY DETAILS MODAL */}
       {selectedDay && (
         <DayDetailsModal
           date={selectedDay}
@@ -1617,47 +1682,48 @@ function PlanDetails() {
         />
       )}
 
-      {/* ========================================
-          EXPENSE PROMPT MODAL
-          ======================================== */}
+      {/* EXPENSE PROMPT MODAL */}
       {showExpensePrompt && lastCreatedActivity && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}
-        onClick={() => setShowExpensePrompt(false)}
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: colors.overlay,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+          onClick={() => setShowExpensePrompt(false)}
         >
           <div
+            className="animate-scaleIn"
             style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
+              backgroundColor: colors.cardBg,
+              borderRadius: '16px',
               padding: '30px',
               maxWidth: '500px',
               width: '100%',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+              boxShadow: `0 8px 32px ${colors.shadow}`,
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginTop: 0 }}>💰 Add Expense?</h3>
-            <p style={{ color: '#666', marginBottom: '25px' }}>
+            <h3 style={{ marginTop: 0, color: colors.text }}>Add Expense?</h3>
+            <p style={{ color: colors.textSecondary, marginBottom: '25px' }}>
               Were there any expenses for "{lastCreatedActivity.title}"?
             </p>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={() => {
                   setShowExpensePrompt(false);
                   setActiveTab('expenses');
                   setShowExpenseForm(true);
+                  setViewExpenses(true);
                   setExpenseFormData({
                     description: lastCreatedActivity.title,
                     amount: '',
@@ -1670,14 +1736,15 @@ function PlanDetails() {
                 }}
                 style={{
                   flex: 1,
-                  padding: '12px 24px',
+                  padding: '14px 24px',
                   fontSize: '16px',
                   fontWeight: 'bold',
-                  backgroundColor: '#4CAF50',
+                  backgroundColor: colors.success,
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 Yes, Add Expense
@@ -1686,14 +1753,15 @@ function PlanDetails() {
                 onClick={() => setShowExpensePrompt(false)}
                 style={{
                   flex: 1,
-                  padding: '12px 24px',
+                  padding: '14px 24px',
                   fontSize: '16px',
                   fontWeight: 'bold',
-                  backgroundColor: '#999',
+                  backgroundColor: colors.textMuted,
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
               >
                 No, Skip
