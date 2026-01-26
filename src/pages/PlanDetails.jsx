@@ -1,7 +1,7 @@
 // ========================================
 // IMPORTS
 // ========================================
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
@@ -36,6 +36,10 @@ function PlanDetails() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [expandedScheduling, setExpandedScheduling] = useState(null);
   const [tempSuggestions, setTempSuggestions] = useState({});
+  const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'priority', 'dueDate', 'completed'
+  const [newTaskPriority, setNewTaskPriority] = useState('medium');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [newTaskAssignee, setNewTaskAssignee] = useState('');
   const { colors } = useTheme();
 
   // Expense tracking state
@@ -135,13 +139,19 @@ function PlanDetails() {
         createdAt: new Date(),
         scheduledDate: null,
         scheduledTime: null,
-        dateTimeSuggestions: []
+        dateTimeSuggestions: [],
+        priority: newTaskPriority,
+        dueDate: newTaskDueDate || null,
+        assignedTo: newTaskAssignee || null,
       });
 
       const activityTitle = newActivity;
       const activityType = currentView;
 
       setNewActivity('');
+      setNewTaskPriority('medium');
+      setNewTaskDueDate('');
+      setNewTaskAssignee('');
       await fetchPlanAndActivities();
 
       toast.success(`${currentView === 'task' ? 'Task' : 'Activity'} added!`);
@@ -206,6 +216,19 @@ function PlanDetails() {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingText('');
+  };
+
+  const handleUpdateTaskProperty = async (activityId, property, value) => {
+    try {
+      await updateDoc(doc(db, 'activities', activityId), {
+        [property]: value
+      });
+      fetchPlanAndActivities();
+      toast.success('Task updated');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error('Failed to update task');
+    }
   };
 
   // ========================================
@@ -277,7 +300,8 @@ function PlanDetails() {
 
       await updateDoc(doc(db, 'activities', activityId), {
         scheduledDate: suggestion.date,
-        scheduledTime: suggestion.time
+        scheduledTime: suggestion.time,
+        dueDate: suggestion.date // Auto-populate due date with scheduled date
       });
 
       toast.success('Activity scheduled!');
@@ -498,12 +522,37 @@ function PlanDetails() {
   };
 
   // ========================================
-  // FILTER ACTIVITIES BY TYPE
+  // FILTER AND SORT ACTIVITIES
   // ========================================
-  const filteredActivities = activities.filter(activity => {
-    const activityType = activity.type || 'task';
-    return activityType === currentView;
-  });
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+
+  const filteredActivities = useMemo(() => {
+    let filtered = activities.filter(activity => {
+      const activityType = activity.type || 'task';
+      return activityType === currentView;
+    });
+
+    // Sort based on sortBy
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return (a.createdAt?.toDate?.() || new Date(a.createdAt)) - (b.createdAt?.toDate?.() || new Date(b.createdAt));
+        case 'newest':
+          return (b.createdAt?.toDate?.() || new Date(b.createdAt)) - (a.createdAt?.toDate?.() || new Date(a.createdAt));
+        case 'priority':
+          return (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1);
+        case 'dueDate':
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        case 'completed':
+          return (a.completed === b.completed) ? 0 : a.completed ? 1 : -1;
+        default:
+          return 0;
+      }
+    });
+  }, [activities, currentView, sortBy]);
 
   const taskCount = activities.filter(a => (a.type || 'task') === 'task').length;
   const activityCount = activities.filter(a => a.type === 'activity').length;
@@ -728,7 +777,8 @@ function PlanDetails() {
           { id: 'members', label: 'Directory' },
           { id: 'calendar', label: 'Calendar' },
           { id: 'tasks', label: 'Tasks & Activities' },
-          { id: 'expenses', label: 'Expenses' }
+          { id: 'expenses', label: 'Expenses' },
+          { id: 'analytics', label: 'Analytics' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -854,48 +904,124 @@ function PlanDetails() {
             ? 'Quick to-do items (e.g., "Pack sunscreen", "Download offline maps")'
             : 'Planned activities for your trip (e.g., "Visit Eiffel Tower", "Dinner at Italian restaurant")'}
         </p>
-        <form onSubmit={handleAddActivity} style={{ display: 'flex', gap: '10px' }}>
-          <input
-            type="text"
-            placeholder={currentView === 'task' ? 'New task...' : 'New activity...'}
-            value={newActivity}
-            onChange={(e) => setNewActivity(e.target.value)}
-            style={{ ...inputStyle, flex: 1 }}
-            onFocus={(e) => {
-              e.target.style.borderColor = currentView === 'task' ? colors.primary : colors.warning;
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = colors.inputBorder;
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              padding: '12px 24px',
-              backgroundColor: currentView === 'task' ? colors.primary : colors.warning,
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            Add
-          </button>
+        <form onSubmit={handleAddActivity}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+            <input
+              type="text"
+              placeholder={currentView === 'task' ? 'New task...' : 'New activity...'}
+              value={newActivity}
+              onChange={(e) => setNewActivity(e.target.value)}
+              style={{ ...inputStyle, flex: 1 }}
+              onFocus={(e) => {
+                e.target.style.borderColor = currentView === 'task' ? colors.primary : colors.warning;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = colors.inputBorder;
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '12px 24px',
+                backgroundColor: currentView === 'task' ? colors.primary : colors.warning,
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Add
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1', minWidth: '120px' }}>
+              <label style={{ fontSize: '12px', color: colors.textSecondary, display: 'block', marginBottom: '4px' }}>
+                Priority
+              </label>
+              <select
+                value={newTaskPriority}
+                onChange={(e) => setNewTaskPriority(e.target.value)}
+                style={{ ...inputStyle, width: '100%' }}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div style={{ flex: '1', minWidth: '150px' }}>
+              <label style={{ fontSize: '12px', color: colors.textSecondary, display: 'block', marginBottom: '4px' }}>
+                Due Date (optional)
+              </label>
+              <input
+                type="date"
+                value={newTaskDueDate}
+                onChange={(e) => setNewTaskDueDate(e.target.value)}
+                min={plan?.startDate}
+                max={plan?.endDate}
+                style={{ ...inputStyle, width: '100%' }}
+              />
+            </div>
+            <div style={{ flex: '1', minWidth: '150px' }}>
+              <label style={{ fontSize: '12px', color: colors.textSecondary, display: 'block', marginBottom: '4px' }}>
+                Assign to (optional)
+              </label>
+              <select
+                value={newTaskAssignee}
+                onChange={(e) => setNewTaskAssignee(e.target.value)}
+                style={{ ...inputStyle, width: '100%' }}
+              >
+                <option value="">Unassigned</option>
+                {plan?.members?.map(memberId => (
+                  <option key={memberId} value={memberId}>
+                    {getUserDisplayName(memberId, profiles, auth.currentUser.uid)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </form>
       </div>
 
-      {/* TASKS LIST */}
-      <h2 style={{ color: colors.text }}>
-        {currentView === 'task' ? '✓ Simple Tasks' : 'Activities'} ({filteredActivities.length})
-      </h2>
+      {/* TASKS LIST HEADER WITH SORT */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px',
+        flexWrap: 'wrap',
+        gap: '12px',
+      }}>
+        <h2 style={{ color: colors.text, margin: 0 }}>
+          {currentView === 'task' ? '✓ Simple Tasks' : 'Activities'} ({filteredActivities.length})
+        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <label style={{ fontSize: '14px', color: colors.textSecondary }}>Sort by:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              ...inputStyle,
+              padding: '8px 12px',
+              fontSize: '14px',
+              minWidth: '140px',
+            }}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="priority">Priority</option>
+            <option value="dueDate">Due Date</option>
+            <option value="completed">Incomplete First</option>
+          </select>
+        </div>
+      </div>
       {filteredActivities.length === 0 ? (
         <div style={{
           color: colors.textMuted,
@@ -1001,14 +1127,137 @@ function PlanDetails() {
                 </>
               ) : (
                 <>
-                  <span style={{
-                    flex: 1,
-                    textDecoration: activity.completed ? 'line-through' : 'none',
-                    color: activity.completed ? colors.textMuted : colors.text,
-                    fontSize: '16px',
-                  }}>
-                    {activity.title}
-                  </span>
+                  <div style={{ flex: 1 }}>
+                    <span style={{
+                      textDecoration: activity.completed ? 'line-through' : 'none',
+                      color: activity.completed ? colors.textMuted : colors.text,
+                      fontSize: '16px',
+                    }}>
+                      {activity.title}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {/* Priority - Admin can edit, others see badge */}
+                      {plan.admin === auth.currentUser.uid ? (
+                        <select
+                          value={activity.priority || 'medium'}
+                          onChange={(e) => handleUpdateTaskProperty(activity.id, 'priority', e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            padding: '2px 6px',
+                            borderRadius: '10px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            backgroundColor: activity.priority === 'high' ? colors.dangerLight :
+                                            activity.priority === 'low' ? colors.successLight : colors.warningLight,
+                            color: activity.priority === 'high' ? colors.danger :
+                                   activity.priority === 'low' ? colors.success : colors.warning,
+                            border: `1px solid ${activity.priority === 'high' ? colors.danger :
+                                    activity.priority === 'low' ? colors.success : colors.warning}40`,
+                            cursor: 'pointer',
+                            outline: 'none',
+                          }}
+                        >
+                          <option value="low">LOW</option>
+                          <option value="medium">MEDIUM</option>
+                          <option value="high">HIGH</option>
+                        </select>
+                      ) : (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          backgroundColor: activity.priority === 'high' ? colors.dangerLight :
+                                          activity.priority === 'low' ? colors.successLight : colors.warningLight,
+                          color: activity.priority === 'high' ? colors.danger :
+                                 activity.priority === 'low' ? colors.success : colors.warning,
+                        }}>
+                          {(activity.priority || 'medium').toUpperCase()}
+                        </span>
+                      )}
+                      {/* Due Date - Admin can edit, others see badge */}
+                      {plan.admin === auth.currentUser.uid ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '11px' }}>📅</span>
+                          <input
+                            type="date"
+                            value={activity.dueDate || ''}
+                            onChange={(e) => handleUpdateTaskProperty(activity.id, 'dueDate', e.target.value || null)}
+                            onClick={(e) => e.stopPropagation()}
+                            min={plan?.startDate}
+                            max={plan?.endDate}
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: '10px',
+                              fontSize: '11px',
+                              fontWeight: '500',
+                              backgroundColor: activity.dueDate && new Date(activity.dueDate) < new Date() && !activity.completed
+                                ? colors.dangerLight : colors.backgroundTertiary,
+                              color: activity.dueDate && new Date(activity.dueDate) < new Date() && !activity.completed
+                                ? colors.danger : colors.textSecondary,
+                              border: `1px solid ${colors.border}`,
+                              cursor: 'pointer',
+                              outline: 'none',
+                            }}
+                          />
+                        </div>
+                      ) : activity.dueDate ? (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          backgroundColor: new Date(activity.dueDate) < new Date() && !activity.completed
+                            ? colors.dangerLight : colors.backgroundTertiary,
+                          color: new Date(activity.dueDate) < new Date() && !activity.completed
+                            ? colors.danger : colors.textSecondary,
+                        }}>
+                          📅 {activity.dueDate}
+                        </span>
+                      ) : null}
+                      {/* Assignee - Admin can edit, others see badge */}
+                      {plan.admin === auth.currentUser.uid ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '11px' }}>👤</span>
+                          <select
+                            value={activity.assignedTo || ''}
+                            onChange={(e) => handleUpdateTaskProperty(activity.id, 'assignedTo', e.target.value || null)}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: '10px',
+                              fontSize: '11px',
+                              fontWeight: '500',
+                              backgroundColor: activity.assignedTo ? colors.purpleLight : colors.backgroundTertiary,
+                              color: activity.assignedTo ? colors.purple : colors.textSecondary,
+                              border: `1px solid ${colors.border}`,
+                              cursor: 'pointer',
+                              outline: 'none',
+                              maxWidth: '120px',
+                            }}
+                          >
+                            <option value="">Unassigned</option>
+                            {plan?.members?.map(memberId => (
+                              <option key={memberId} value={memberId}>
+                                {getUserDisplayName(memberId, profiles, auth.currentUser.uid)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : activity.assignedTo ? (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          backgroundColor: colors.purpleLight,
+                          color: colors.purple,
+                        }}>
+                          👤 {getUserDisplayName(activity.assignedTo, profiles, auth.currentUser.uid)}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
                   <button
                     onClick={() => handleStartEdit(activity)}
                     style={{
@@ -1668,6 +1917,517 @@ function PlanDetails() {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* ANALYTICS TAB */}
+      {activeTab === 'analytics' && (
+        <div className="animate-fadeIn">
+          <h2 style={{ color: colors.text, marginBottom: '24px' }}>Plan Analytics</h2>
+
+          {/* Progress Visualization */}
+          <div style={{
+            backgroundColor: colors.cardBg,
+            padding: '24px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            border: `1px solid ${colors.border}`,
+            boxShadow: `0 2px 8px ${colors.shadow}`,
+          }}>
+            <h3 style={{ color: colors.text, marginTop: 0, marginBottom: '20px' }}>📊 Task Progress</h3>
+            {(() => {
+              const totalTasks = activities.length;
+              const completedTasks = activities.filter(a => a.completed).length;
+              const taskProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+              const simpleTasks = activities.filter(a => (a.type || 'task') === 'task');
+              const activityItems = activities.filter(a => a.type === 'activity');
+              const completedSimple = simpleTasks.filter(a => a.completed).length;
+              const completedActivities = activityItems.filter(a => a.completed).length;
+
+              return (
+                <div>
+                  {/* Overall Progress Bar */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ color: colors.textSecondary, fontWeight: '500' }}>Overall Completion</span>
+                      <span style={{ color: colors.text, fontWeight: 'bold' }}>{completedTasks}/{totalTasks} ({taskProgress.toFixed(0)}%)</span>
+                    </div>
+                    <div style={{
+                      height: '24px',
+                      backgroundColor: colors.backgroundTertiary,
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${taskProgress}%`,
+                        backgroundColor: taskProgress === 100 ? colors.success : colors.primary,
+                        borderRadius: '12px',
+                        transition: 'width 0.5s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        {taskProgress >= 20 && (
+                          <span style={{ color: 'white', fontSize: '12px', fontWeight: 'bold' }}>
+                            {taskProgress.toFixed(0)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Breakdown by Type */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <div style={{
+                      padding: '16px',
+                      backgroundColor: `${colors.primary}15`,
+                      borderRadius: '10px',
+                      border: `1px solid ${colors.primary}30`,
+                    }}>
+                      <div style={{ fontSize: '14px', color: colors.textSecondary, marginBottom: '4px' }}>Simple Tasks</div>
+                      <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.primary }}>{completedSimple}/{simpleTasks.length}</div>
+                      <div style={{
+                        height: '6px',
+                        backgroundColor: colors.backgroundTertiary,
+                        borderRadius: '3px',
+                        marginTop: '8px',
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          height: '100%',
+                          width: simpleTasks.length > 0 ? `${(completedSimple / simpleTasks.length) * 100}%` : '0%',
+                          backgroundColor: colors.primary,
+                          borderRadius: '3px',
+                        }} />
+                      </div>
+                    </div>
+                    <div style={{
+                      padding: '16px',
+                      backgroundColor: `${colors.warning}15`,
+                      borderRadius: '10px',
+                      border: `1px solid ${colors.warning}30`,
+                    }}>
+                      <div style={{ fontSize: '14px', color: colors.textSecondary, marginBottom: '4px' }}>Activities</div>
+                      <div style={{ fontSize: '28px', fontWeight: 'bold', color: colors.warning }}>{completedActivities}/{activityItems.length}</div>
+                      <div style={{
+                        height: '6px',
+                        backgroundColor: colors.backgroundTertiary,
+                        borderRadius: '3px',
+                        marginTop: '8px',
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          height: '100%',
+                          width: activityItems.length > 0 ? `${(completedActivities / activityItems.length) * 100}%` : '0%',
+                          backgroundColor: colors.warning,
+                          borderRadius: '3px',
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Priority Breakdown */}
+                  <div style={{ marginTop: '24px' }}>
+                    <div style={{ fontSize: '14px', color: colors.textSecondary, marginBottom: '12px', fontWeight: '500' }}>By Priority</div>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      {['high', 'medium', 'low'].map(priority => {
+                        const count = activities.filter(a => (a.priority || 'medium') === priority).length;
+                        const completed = activities.filter(a => (a.priority || 'medium') === priority && a.completed).length;
+                        const priorityColors = {
+                          high: colors.danger,
+                          medium: colors.warning,
+                          low: colors.success
+                        };
+                        return (
+                          <div key={priority} style={{
+                            padding: '12px 16px',
+                            backgroundColor: colors.backgroundTertiary,
+                            borderRadius: '8px',
+                            borderLeft: `4px solid ${priorityColors[priority]}`,
+                            minWidth: '100px',
+                          }}>
+                            <div style={{ fontSize: '12px', color: colors.textMuted, textTransform: 'uppercase' }}>{priority}</div>
+                            <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.text }}>{completed}/{count}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Expense Breakdown by Category */}
+          <div style={{
+            backgroundColor: colors.cardBg,
+            padding: '24px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            border: `1px solid ${colors.border}`,
+            boxShadow: `0 2px 8px ${colors.shadow}`,
+          }}>
+            <h3 style={{ color: colors.text, marginTop: 0, marginBottom: '20px' }}>💰 Expense Breakdown</h3>
+            {(() => {
+              const categoryData = {
+                food: { label: 'Food & Dining', icon: '🍔', color: '#FF6B6B' },
+                lodging: { label: 'Lodging', icon: '🏨', color: '#4ECDC4' },
+                transport: { label: 'Transportation', icon: '🚗', color: '#45B7D1' },
+                activities: { label: 'Activities', icon: '🎯', color: '#96CEB4' },
+                shopping: { label: 'Shopping', icon: '🛍️', color: '#FFEAA7' },
+                other: { label: 'Other', icon: '📦', color: '#DDA0DD' }
+              };
+
+              const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+              const byCategory = expenses.reduce((acc, e) => {
+                acc[e.category] = (acc[e.category] || 0) + e.amount;
+                return acc;
+              }, {});
+
+              if (expenses.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
+                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>💸</div>
+                    <p>No expenses recorded yet</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div>
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '20px',
+                    backgroundColor: colors.successLight,
+                    borderRadius: '10px',
+                    marginBottom: '20px',
+                  }}>
+                    <div style={{ fontSize: '14px', color: colors.textSecondary }}>Total Expenses</div>
+                    <div style={{ fontSize: '36px', fontWeight: 'bold', color: colors.success }}>${totalExpenses.toFixed(2)}</div>
+                  </div>
+
+                  {/* Category Bars */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {Object.entries(byCategory)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([category, amount]) => {
+                        const data = categoryData[category] || categoryData.other;
+                        const percentage = (amount / totalExpenses) * 100;
+                        return (
+                          <div key={category}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                              <span style={{ color: colors.text }}>
+                                {data.icon} {data.label}
+                              </span>
+                              <span style={{ color: colors.textSecondary, fontWeight: '500' }}>
+                                ${amount.toFixed(2)} ({percentage.toFixed(0)}%)
+                              </span>
+                            </div>
+                            <div style={{
+                              height: '20px',
+                              backgroundColor: colors.backgroundTertiary,
+                              borderRadius: '10px',
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                height: '100%',
+                                width: `${percentage}%`,
+                                backgroundColor: data.color,
+                                borderRadius: '10px',
+                                transition: 'width 0.5s ease',
+                              }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Member Contribution Stats */}
+          <div style={{
+            backgroundColor: colors.cardBg,
+            padding: '24px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            border: `1px solid ${colors.border}`,
+            boxShadow: `0 2px 8px ${colors.shadow}`,
+          }}>
+            <h3 style={{ color: colors.text, marginTop: 0, marginBottom: '20px' }}>👥 Member Contributions</h3>
+            {(() => {
+              const memberStats = plan.members.map(memberId => {
+                const tasksCreated = activities.filter(a => a.createdBy === memberId).length;
+                const tasksCompleted = activities.filter(a => a.assignedTo === memberId && a.completed).length;
+                const tasksAssigned = activities.filter(a => a.assignedTo === memberId).length;
+                const expensesPaid = expenses.filter(e => e.paidBy === memberId).reduce((sum, e) => sum + e.amount, 0);
+                return {
+                  memberId,
+                  tasksCreated,
+                  tasksCompleted,
+                  tasksAssigned,
+                  expensesPaid
+                };
+              });
+
+              const totalPaid = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+              return (
+                <div style={{ display: 'grid', gap: '16px' }}>
+                  {memberStats.map(stat => (
+                    <div key={stat.memberId} style={{
+                      padding: '16px',
+                      backgroundColor: colors.backgroundTertiary,
+                      borderRadius: '10px',
+                      border: `1px solid ${colors.border}`,
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '12px',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            backgroundColor: colors.primary,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '16px',
+                          }}>
+                            {getUserDisplayName(stat.memberId, profiles, auth.currentUser.uid).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 'bold', color: colors.text }}>
+                              {getUserDisplayName(stat.memberId, profiles, auth.currentUser.uid)}
+                            </div>
+                            {plan.admin === stat.memberId && (
+                              <span style={{
+                                fontSize: '11px',
+                                backgroundColor: colors.success,
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                              }}>Admin</span>
+                            )}
+                          </div>
+                        </div>
+                        {stat.expensesPaid > 0 && (
+                          <div style={{
+                            padding: '6px 12px',
+                            backgroundColor: colors.successLight,
+                            color: colors.success,
+                            borderRadius: '16px',
+                            fontWeight: 'bold',
+                            fontSize: '14px',
+                          }}>
+                            Paid ${stat.expensesPaid.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div style={{ minWidth: '80px' }}>
+                          <div style={{ fontSize: '11px', color: colors.textMuted }}>Tasks Created</div>
+                          <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.primary }}>{stat.tasksCreated}</div>
+                        </div>
+                        <div style={{ minWidth: '80px' }}>
+                          <div style={{ fontSize: '11px', color: colors.textMuted }}>Assigned</div>
+                          <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.warning }}>{stat.tasksAssigned}</div>
+                        </div>
+                        <div style={{ minWidth: '80px' }}>
+                          <div style={{ fontSize: '11px', color: colors.textMuted }}>Completed</div>
+                          <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.success }}>{stat.tasksCompleted}</div>
+                        </div>
+                        {totalPaid > 0 && stat.expensesPaid > 0 && (
+                          <div style={{ minWidth: '80px' }}>
+                            <div style={{ fontSize: '11px', color: colors.textMuted }}>% of Expenses</div>
+                            <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.text }}>
+                              {((stat.expensesPaid / totalPaid) * 100).toFixed(0)}%
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Timeline View of Activities */}
+          <div style={{
+            backgroundColor: colors.cardBg,
+            padding: '24px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            border: `1px solid ${colors.border}`,
+            boxShadow: `0 2px 8px ${colors.shadow}`,
+          }}>
+            <h3 style={{ color: colors.text, marginTop: 0, marginBottom: '20px' }}>📅 Activity Timeline</h3>
+            {(() => {
+              const scheduledActivities = activities
+                .filter(a => a.scheduledDate)
+                .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+
+              if (scheduledActivities.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
+                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>📅</div>
+                    <p>No activities scheduled yet</p>
+                    <p style={{ fontSize: '14px' }}>Schedule activities from the Tasks & Activities tab</p>
+                  </div>
+                );
+              }
+
+              // Group by date
+              const groupedByDate = scheduledActivities.reduce((acc, activity) => {
+                const date = activity.scheduledDate;
+                if (!acc[date]) acc[date] = [];
+                acc[date].push(activity);
+                return acc;
+              }, {});
+
+              const today = new Date().toISOString().split('T')[0];
+
+              return (
+                <div style={{ position: 'relative', paddingLeft: '30px' }}>
+                  {/* Timeline Line */}
+                  <div style={{
+                    position: 'absolute',
+                    left: '10px',
+                    top: '10px',
+                    bottom: '10px',
+                    width: '3px',
+                    backgroundColor: colors.border,
+                    borderRadius: '2px',
+                  }} />
+
+                  {Object.entries(groupedByDate).map(([date, dateActivities], index) => {
+                    const isPast = date < today;
+                    const isToday = date === today;
+                    const dateObj = new Date(date + 'T00:00:00');
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                    const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                    return (
+                      <div key={date} style={{ marginBottom: '24px', position: 'relative' }}>
+                        {/* Timeline Dot */}
+                        <div style={{
+                          position: 'absolute',
+                          left: '-24px',
+                          top: '6px',
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '50%',
+                          backgroundColor: isToday ? colors.primary : isPast ? colors.textMuted : colors.success,
+                          border: `3px solid ${colors.cardBg}`,
+                          boxShadow: `0 0 0 2px ${isToday ? colors.primary : isPast ? colors.textMuted : colors.success}`,
+                        }} />
+
+                        {/* Date Header */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          marginBottom: '12px',
+                        }}>
+                          <span style={{
+                            fontWeight: 'bold',
+                            color: isToday ? colors.primary : colors.text,
+                            fontSize: '16px',
+                          }}>
+                            {dayName}, {monthDay}
+                          </span>
+                          {isToday && (
+                            <span style={{
+                              backgroundColor: colors.primary,
+                              color: 'white',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                            }}>TODAY</span>
+                          )}
+                          {isPast && (
+                            <span style={{
+                              backgroundColor: colors.textMuted,
+                              color: 'white',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontSize: '11px',
+                            }}>PAST</span>
+                          )}
+                        </div>
+
+                        {/* Activities for this date */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {dateActivities.map(activity => (
+                            <div key={activity.id} style={{
+                              padding: '12px 16px',
+                              backgroundColor: activity.completed ? colors.successLight : colors.backgroundTertiary,
+                              borderRadius: '8px',
+                              borderLeft: `4px solid ${activity.type === 'activity' ? colors.warning : colors.primary}`,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: '8px',
+                            }}>
+                              <div>
+                                <span style={{
+                                  color: activity.completed ? colors.textMuted : colors.text,
+                                  textDecoration: activity.completed ? 'line-through' : 'none',
+                                  fontWeight: '500',
+                                }}>
+                                  {activity.title}
+                                </span>
+                                {activity.scheduledTime && (
+                                  <span style={{
+                                    marginLeft: '10px',
+                                    color: colors.textSecondary,
+                                    fontSize: '13px',
+                                  }}>
+                                    ⏰ {activity.scheduledTime}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                {activity.assignedTo && (
+                                  <span style={{
+                                    fontSize: '12px',
+                                    color: colors.purple,
+                                    backgroundColor: colors.purpleLight,
+                                    padding: '2px 8px',
+                                    borderRadius: '10px',
+                                  }}>
+                                    👤 {getUserDisplayName(activity.assignedTo, profiles, auth.currentUser.uid)}
+                                  </span>
+                                )}
+                                {activity.completed && (
+                                  <span style={{
+                                    fontSize: '12px',
+                                    color: colors.success,
+                                    fontWeight: 'bold',
+                                  }}>✓ Done</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
         </div>
       )}
 

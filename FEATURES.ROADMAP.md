@@ -133,20 +133,20 @@
 - [x] Toast notifications
 - [x] Custom color themes (light/dark theme system)
 
-### User Experience
-- [ ] Search/filter plans
-- [ ] Sort tasks (by date, completion, priority)
-- [ ] Task priority levels
-- [ ] Due dates for tasks
-- [ ] Task assignment to members
-- [ ] Duplicate plan feature
-- [ ] Archive completed plans
+### User Experience ✅ COMPLETED
+- [x] Search/filter plans
+- [x] Sort tasks (by date, completion, priority)
+- [x] Task priority levels
+- [x] Due dates for tasks
+- [x] Task assignment to members
+- [x] Duplicate plan feature
+- [x] Archive completed plans
 
-### Analytics & Insights
-- [ ] Progress visualization (charts)
-- [ ] Expense breakdown by category
-- [ ] Member contribution stats
-- [ ] Timeline view of activities
+### Analytics & Insights ✅ COMPLETED
+- [x] Progress visualization (charts)
+- [x] Expense breakdown by category
+- [x] Member contribution stats
+- [x] Timeline view of activities
 
 ## 🔮 FUTURE FEATURES (Post-MVP)
 
