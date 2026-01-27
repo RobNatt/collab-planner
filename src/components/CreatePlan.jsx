@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
+import { LoadingSpinner } from './LoadingSpinner';
 import toast from 'react-hot-toast';
 
 function CreatePlan({ onPlanCreated }) {
@@ -180,6 +181,9 @@ function CreatePlan({ onPlanCreated }) {
             cursor: loading ? 'not-allowed' : 'pointer',
             fontWeight: '600',
             transition: 'all 0.2s ease',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
           }}
           onMouseEnter={(e) => {
             if (!loading) {
@@ -192,7 +196,17 @@ function CreatePlan({ onPlanCreated }) {
             e.currentTarget.style.boxShadow = 'none';
           }}
         >
-          {loading ? 'Creating...' : 'Create Plan'}
+          {loading && (
+            <div style={{
+              width: 18,
+              height: 18,
+              border: '2px solid rgba(255,255,255,0.3)',
+              borderTop: '2px solid white',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }} />
+          )}
+          {loading ? 'Creating Plan...' : 'Create Plan'}
         </button>
       </form>
     </div>

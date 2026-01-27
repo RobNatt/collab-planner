@@ -15,6 +15,7 @@ import { getUserDisplayName, getUserOwesName } from '../utils/userHelpers';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { SkeletonText, Skeleton } from '../components/Skeleton';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
 
 // ========================================
@@ -41,6 +42,11 @@ function PlanDetails() {
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskAssignee, setNewTaskAssignee] = useState('');
   const { colors } = useTheme();
+
+  // Action-specific loading states
+  const [addingTask, setAddingTask] = useState(false);
+  const [savingExpense, setSavingExpense] = useState(false);
+  const [actionLoading, setActionLoading] = useState({}); // For individual item actions
 
   // Expense tracking state
   const [expenses, setExpenses] = useState([]);
@@ -127,8 +133,9 @@ function PlanDetails() {
   // ========================================
   const handleAddActivity = async (e) => {
     e.preventDefault();
-    if (!newActivity.trim()) return;
+    if (!newActivity.trim() || addingTask) return;
 
+    setAddingTask(true);
     try {
       await addDoc(collection(db, 'activities'), {
         planId: planId,
@@ -160,6 +167,8 @@ function PlanDetails() {
     } catch (error) {
       console.error('Error adding activity:', error);
       toast.error('Failed to add activity');
+    } finally {
+      setAddingTask(false);
     }
   };
 
@@ -340,6 +349,7 @@ function PlanDetails() {
       return;
     }
 
+    setSavingExpense(true);
     try {
       const expenseData = {
         planId: planId,
@@ -378,6 +388,8 @@ function PlanDetails() {
     } catch (error) {
       console.error('Error saving expense:', error);
       toast.error('Error saving expense');
+    } finally {
+      setSavingExpense(false);
     }
   };
 
@@ -921,24 +933,38 @@ function PlanDetails() {
             />
             <button
               type="submit"
+              disabled={addingTask}
               style={{
                 padding: '12px 24px',
-                backgroundColor: currentView === 'task' ? colors.primary : colors.warning,
+                backgroundColor: addingTask ? colors.textMuted : (currentView === 'task' ? colors.primary : colors.warning),
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: addingTask ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold',
                 transition: 'all 0.2s ease',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
+                if (!addingTask) e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              Add
+              {addingTask && (
+                <div style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTop: '2px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+              )}
+              {addingTask ? 'Adding...' : 'Add'}
             </button>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -1703,22 +1729,38 @@ function PlanDetails() {
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <button
                         type="submit"
+                        disabled={savingExpense}
                         style={{
                           flex: 1,
                           padding: '14px',
-                          backgroundColor: colors.success,
+                          backgroundColor: savingExpense ? colors.textMuted : colors.success,
                           color: 'white',
                           border: 'none',
                           borderRadius: '8px',
-                          cursor: 'pointer',
+                          cursor: savingExpense ? 'not-allowed' : 'pointer',
                           fontWeight: 'bold',
                           fontSize: '16px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
                         }}
                       >
-                        {editingExpenseId ? 'Update' : 'Add'} Expense
+                        {savingExpense && (
+                          <div style={{
+                            width: 18,
+                            height: 18,
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTop: '2px solid white',
+                            borderRadius: '50%',
+                            animation: 'spin 0.8s linear infinite',
+                          }} />
+                        )}
+                        {savingExpense ? 'Saving...' : `${editingExpenseId ? 'Update' : 'Add'} Expense`}
                       </button>
                       <button
                         type="button"
+                        disabled={savingExpense}
                         onClick={() => {
                           setShowExpenseForm(false);
                           setEditingExpenseId(null);
@@ -1729,8 +1771,9 @@ function PlanDetails() {
                           color: 'white',
                           border: 'none',
                           borderRadius: '8px',
-                          cursor: 'pointer',
+                          cursor: savingExpense ? 'not-allowed' : 'pointer',
                           fontWeight: 'bold',
+                          opacity: savingExpense ? 0.6 : 1,
                         }}
                       >
                         Cancel
