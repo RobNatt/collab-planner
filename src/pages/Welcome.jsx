@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -8,8 +9,24 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 function Welcome() {
   const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [user, setUser] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
   const { colors } = useTheme();
+
+  // Check authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        // Not logged in, redirect to login
+        navigate('/login');
+      }
+      setCheckingAuth(false);
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   const tutorialSteps = [
     {
@@ -63,10 +80,15 @@ function Welcome() {
   ];
 
   const handleComplete = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
     setSaving(true);
     try {
       // Mark tutorial as completed in user profile
-      await setDoc(doc(db, 'userProfiles', auth.currentUser.uid), {
+      await setDoc(doc(db, 'userProfiles', user.uid), {
         tutorialCompleted: true,
         tutorialCompletedAt: new Date(),
       }, { merge: true });
@@ -74,14 +96,20 @@ function Welcome() {
       navigate('/dashboard');
     } catch (error) {
       console.error('Error saving tutorial status:', error);
+      // Still navigate to dashboard even if saving fails
       navigate('/dashboard');
     }
   };
 
   const handleSkip = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
     setSaving(true);
     try {
-      await setDoc(doc(db, 'userProfiles', auth.currentUser.uid), {
+      await setDoc(doc(db, 'userProfiles', user.uid), {
         tutorialCompleted: true,
         tutorialSkipped: true,
       }, { merge: true });
@@ -92,6 +120,21 @@ function Welcome() {
       navigate('/dashboard');
     }
   };
+
+  // Show loading while checking auth
+  if (checkingAuth) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: colors.background,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <LoadingSpinner size="large" text="Loading..." />
+      </div>
+    );
+  }
 
   const step = tutorialSteps[currentStep];
   const isLastStep = currentStep === tutorialSteps.length - 1;
