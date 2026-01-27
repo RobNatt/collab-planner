@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import toast from 'react-hot-toast';
 
 function Welcome() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -81,6 +82,7 @@ function Welcome() {
 
   const handleComplete = async () => {
     if (!user) {
+      toast.error('Please log in first');
       navigate('/login');
       return;
     }
@@ -93,16 +95,20 @@ function Welcome() {
         tutorialCompletedAt: new Date(),
       }, { merge: true });
 
-      navigate('/dashboard');
+      toast.success('Welcome to Collab Planner!');
+      // Use window.location for more reliable navigation
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error saving tutorial status:', error);
+      toast.error('Setup error, redirecting anyway...');
       // Still navigate to dashboard even if saving fails
-      navigate('/dashboard');
+      window.location.href = '/dashboard';
     }
   };
 
   const handleSkip = async () => {
     if (!user) {
+      toast.error('Please log in first');
       navigate('/login');
       return;
     }
@@ -114,10 +120,11 @@ function Welcome() {
         tutorialSkipped: true,
       }, { merge: true });
 
-      navigate('/dashboard');
+      toast.success('Welcome to Collab Planner!');
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error saving tutorial status:', error);
-      navigate('/dashboard');
+      window.location.href = '/dashboard';
     }
   };
 
