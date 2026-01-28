@@ -8,6 +8,7 @@ import { db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Skeleton, SkeletonText } from '../components/Skeleton';
+import { logMemberJoined } from '../utils/activityLogger';
 import toast from 'react-hot-toast';
 
 // ========================================
@@ -83,6 +84,9 @@ function JoinPlan() {
       await updateDoc(doc(db, 'plans', plan.id), {
         members: arrayUnion(auth.currentUser.uid)
       });
+
+      // Log activity
+      logMemberJoined(plan.id);
 
       toast.success(`Successfully joined "${plan.name}"!`);
       navigate(`/plan/${plan.id}`);

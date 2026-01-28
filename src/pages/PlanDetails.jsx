@@ -3,7 +3,7 @@
 // ========================================
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import MembersList from '../components/Memberslist.jsx';
 import InviteSection from '../components/InviteSection.jsx';
@@ -16,6 +16,22 @@ import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { SkeletonText, Skeleton } from '../components/Skeleton';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import ActivityFeed from '../components/ActivityFeed';
+import Comments from '../components/Comments';
+import {
+  logTaskCreated,
+  logTaskCompleted,
+  logTaskUncompleted,
+  logTaskDeleted,
+  logTaskEdited,
+  logActivityCreated,
+  logActivityScheduled,
+  logActivityUnscheduled,
+  logExpenseAdded,
+  logExpenseDeleted,
+  logMemberLeft,
+  logVoteCast,
+} from '../utils/activityLogger';
 import toast from 'react-hot-toast';
 
 // ========================================
@@ -46,6 +62,7 @@ function PlanDetails() {
   // Action-specific loading states
   const [addingTask, setAddingTask] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
+  const [expandedComments, setExpandedComments] = useState(null); // Track which task has expanded comments
   const [actionLoading, setActionLoading] = useState({}); // For individual item actions
 
   // Expense tracking state
@@ -74,58 +91,85 @@ function PlanDetails() {
   const [lastCreatedActivity, setLastCreatedActivity] = useState(null);
 
   // ========================================
-  // EFFECTS
+  // EFFECTS - Real-time listeners
   // ========================================
   useEffect(() => {
-    fetchPlanAndActivities();
-    fetchExpenses();
-  }, [planId]);
+    if (!planId) return;
 
-  // ========================================
-  // DATA FETCHING
-  // ========================================
-  const fetchPlanAndActivities = async () => {
-    try {
-      const planDoc = await getDoc(doc(db, 'plans', planId));
-      if (planDoc.exists()) {
-        const planData = { id: planDoc.id, ...planDoc.data() };
+    // Real-time listener for plan document
+    const unsubscribePlan = onSnapshot(
+      doc(db, 'plans', planId),
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const planData = { id: docSnapshot.id, ...docSnapshot.data() };
 
-        if (!planData.members.includes(auth.currentUser.uid)) {
-          toast.error('You are no longer a member of this plan');
+          if (!planData.members.includes(auth.currentUser.uid)) {
+            toast.error('You are no longer a member of this plan');
+            navigate('/dashboard');
+            return;
+          }
+
+          setPlan(planData);
+        } else {
+          toast.error('Plan not found');
           navigate('/dashboard');
-          return;
         }
-
-        setPlan(planData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to plan:', error);
+        toast.error('Failed to load plan data');
+        setLoading(false);
       }
+    );
 
-      const q = query(collection(db, 'activities'), where('planId', '==', planId));
-      const querySnapshot = await getDocs(q);
-      const activitiesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setActivities(activitiesData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Failed to load plan data');
-    } finally {
-      setLoading(false);
-    }
+    // Real-time listener for activities
+    const activitiesQuery = query(collection(db, 'activities'), where('planId', '==', planId));
+    const unsubscribeActivities = onSnapshot(
+      activitiesQuery,
+      (snapshot) => {
+        const activitiesData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setActivities(activitiesData);
+      },
+      (error) => {
+        console.error('Error listening to activities:', error);
+      }
+    );
+
+    // Real-time listener for expenses
+    const expensesQuery = query(collection(db, 'expenses'), where('planId', '==', planId));
+    const unsubscribeExpenses = onSnapshot(
+      expensesQuery,
+      (snapshot) => {
+        const expensesData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setExpenses(expensesData);
+      },
+      (error) => {
+        console.error('Error listening to expenses:', error);
+      }
+    );
+
+    // Cleanup listeners on unmount
+    return () => {
+      unsubscribePlan();
+      unsubscribeActivities();
+      unsubscribeExpenses();
+    };
+  }, [planId, navigate]);
+
+  // Legacy fetch function for manual refresh (kept for compatibility)
+  const fetchPlanAndActivities = async () => {
+    // Now handled by real-time listeners, but kept for any manual refresh needs
   };
 
   const fetchExpenses = async () => {
-    try {
-      const q = query(collection(db, 'expenses'), where('planId', '==', planId));
-      const querySnapshot = await getDocs(q);
-      const expensesData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setExpenses(expensesData);
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
-    }
+    // Now handled by real-time listeners
   };
 
   // ========================================
@@ -155,11 +199,17 @@ function PlanDetails() {
       const activityTitle = newActivity;
       const activityType = currentView;
 
+      // Log activity
+      if (activityType === 'task') {
+        logTaskCreated(planId, activityTitle);
+      } else {
+        logActivityCreated(planId, activityTitle);
+      }
+
       setNewActivity('');
       setNewTaskPriority('medium');
       setNewTaskDueDate('');
       setNewTaskAssignee('');
-      await fetchPlanAndActivities();
 
       toast.success(`${currentView === 'task' ? 'Task' : 'Activity'} added!`);
       setLastCreatedActivity({ title: activityTitle, type: activityType });
@@ -174,10 +224,17 @@ function PlanDetails() {
 
   const handleToggleComplete = async (activityId, currentStatus) => {
     try {
+      const activity = activities.find(a => a.id === activityId);
       await updateDoc(doc(db, 'activities', activityId), {
         completed: !currentStatus
       });
-      fetchPlanAndActivities();
+
+      // Log activity
+      if (!currentStatus) {
+        logTaskCompleted(planId, activity?.title);
+      } else {
+        logTaskUncompleted(planId, activity?.title);
+      }
     } catch (error) {
       console.error('Error updating activity:', error);
       toast.error('Failed to update task');
@@ -188,8 +245,11 @@ function PlanDetails() {
     if (!window.confirm('Delete this task?')) return;
 
     try {
+      const activity = activities.find(a => a.id === activityId);
       await deleteDoc(doc(db, 'activities', activityId));
-      fetchPlanAndActivities();
+
+      // Log activity
+      logTaskDeleted(planId, activity?.title);
       toast.success('Task deleted');
     } catch (error) {
       console.error('Error deleting activity:', error);
@@ -212,9 +272,12 @@ function PlanDetails() {
       await updateDoc(doc(db, 'activities', activityId), {
         title: editingText
       });
+
+      // Log activity
+      logTaskEdited(planId, editingText);
+
       setEditingId(null);
       setEditingText('');
-      fetchPlanAndActivities();
       toast.success('Task updated');
     } catch (error) {
       console.error('Error updating activity:', error);
@@ -283,6 +346,8 @@ function PlanDetails() {
       const suggestions = [...(activity.dateTimeSuggestions || [])];
       const suggestion = suggestions[suggestionIndex];
 
+      const isVoting = !suggestion.votes.includes(auth.currentUser.uid);
+
       if (suggestion.votes.includes(auth.currentUser.uid)) {
         suggestion.votes = suggestion.votes.filter(uid => uid !== auth.currentUser.uid);
       } else {
@@ -293,7 +358,10 @@ function PlanDetails() {
         dateTimeSuggestions: suggestions
       });
 
-      fetchPlanAndActivities();
+      // Log activity only when voting (not un-voting)
+      if (isVoting) {
+        logVoteCast(planId, activity?.title);
+      }
     } catch (error) {
       console.error('Error voting:', error);
       toast.error('Failed to vote');
@@ -313,8 +381,10 @@ function PlanDetails() {
         dueDate: suggestion.date // Auto-populate due date with scheduled date
       });
 
+      // Log activity
+      logActivityScheduled(planId, activity?.title, suggestion.date);
+
       toast.success('Activity scheduled!');
-      fetchPlanAndActivities();
     } catch (error) {
       console.error('Error approving suggestion:', error);
       toast.error('Error scheduling activity');
@@ -325,10 +395,14 @@ function PlanDetails() {
     if (!window.confirm('Remove this activity from the schedule?')) return;
 
     try {
+      const activity = activities.find(a => a.id === activityId);
       await updateDoc(doc(db, 'activities', activityId), {
         scheduledDate: null,
         scheduledTime: null
       });
+
+      // Log activity
+      logActivityUnscheduled(planId, activity?.title);
 
       toast.success('Activity unscheduled');
       fetchPlanAndActivities();
@@ -370,6 +444,8 @@ function PlanDetails() {
         toast.success('Expense updated!');
       } else {
         await addDoc(collection(db, 'expenses'), expenseData);
+        // Log activity for new expense
+        logExpenseAdded(planId, expenseFormData.description, parseFloat(expenseFormData.amount));
         toast.success('Expense added!');
       }
 
@@ -384,7 +460,6 @@ function PlanDetails() {
       });
       setShowExpenseForm(false);
       setEditingExpenseId(null);
-      fetchExpenses();
     } catch (error) {
       console.error('Error saving expense:', error);
       toast.error('Error saving expense');
@@ -411,9 +486,13 @@ function PlanDetails() {
     if (!window.confirm('Delete this expense?')) return;
 
     try {
+      const expense = expenses.find(e => e.id === expenseId);
       await deleteDoc(doc(db, 'expenses', expenseId));
+
+      // Log activity
+      logExpenseDeleted(planId, expense?.description);
+
       toast.success('Expense deleted!');
-      fetchExpenses();
     } catch (error) {
       console.error('Error deleting expense:', error);
       toast.error('Error deleting expense');
@@ -521,6 +600,9 @@ function PlanDetails() {
     }
 
     try {
+      // Log activity before leaving
+      logMemberLeft(planId);
+
       await updateDoc(doc(db, 'plans', planId), {
         members: arrayRemove(auth.currentUser.uid)
       });
@@ -790,7 +872,8 @@ function PlanDetails() {
           { id: 'calendar', label: 'Calendar' },
           { id: 'tasks', label: 'Tasks & Activities' },
           { id: 'expenses', label: 'Expenses' },
-          { id: 'analytics', label: 'Analytics' }
+          { id: 'analytics', label: 'Analytics' },
+          { id: 'activity', label: 'Activity Feed' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -1316,9 +1399,38 @@ function PlanDetails() {
                   >
                     Delete
                   </button>
+                  <button
+                    onClick={() => setExpandedComments(expandedComments === activity.id ? null : activity.id)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: expandedComments === activity.id ? colors.purple : colors.backgroundTertiary,
+                      color: expandedComments === activity.id ? 'white' : colors.text,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    💬 Comments
+                  </button>
                 </>
               )}
             </div>
+
+            {/* COMMENTS SECTION */}
+            {expandedComments === activity.id && (
+              <Comments
+                itemId={activity.id}
+                itemTitle={activity.title}
+                planId={planId}
+                members={plan.members}
+              />
+            )}
 
             {/* SCHEDULING SECTION */}
             <div style={{ marginTop: '15px', borderTop: `1px solid ${colors.border}`, paddingTop: '15px' }}>
@@ -2471,6 +2583,17 @@ function PlanDetails() {
               );
             })()}
           </div>
+        </div>
+      )}
+
+      {/* ACTIVITY FEED TAB */}
+      {activeTab === 'activity' && (
+        <div className="animate-fadeIn">
+          <h2 style={{ color: colors.text, marginBottom: '24px' }}>Activity Feed</h2>
+          <p style={{ color: colors.textSecondary, marginBottom: '24px' }}>
+            See what's happening in your plan in real-time. All changes are synced instantly.
+          </p>
+          <ActivityFeed planId={planId} members={plan.members} />
         </div>
       )}
 

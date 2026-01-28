@@ -150,12 +150,12 @@
 
 ## 🔮 FUTURE FEATURES (Post-MVP)
 
-### Advanced Collaboration
-- [ ] Real-time updates (Firestore listeners)
+### Advanced Collaboration ✅ COMPLETED
+- [x] Real-time updates (Firestore listeners)
 - [ ] Push notifications
-- [ ] In-app chat/comments
-- [ ] Activity feed ("John added a task")
-- [ ] @mentions in comments
+- [x] In-app chat/comments
+- [x] Activity feed ("John added a task")
+- [x] @mentions in comments
 
 ### Scheduling
 - [ ] Assign dates/times to activities
