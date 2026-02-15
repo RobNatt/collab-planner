@@ -5,6 +5,7 @@ import Welcome from './pages/Welcome';
 import Dashboard from './pages/Dashboard';
 import PlanDetails from './pages/PlanDetails';
 import JoinPlan from './pages/JoinPlan';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/plan/:planId" element={<PlanDetails />} />
         <Route path="/join/:inviteCode" element={<JoinPlan />} />
       </Routes>

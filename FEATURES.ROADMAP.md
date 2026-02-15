@@ -152,29 +152,29 @@
 
 ### Advanced Collaboration ✅ COMPLETED
 - [x] Real-time updates (Firestore listeners)
-- [ ] Push notifications
+- [x] Browser notifications (toggle on/off per plan)
 - [x] In-app chat/comments
 - [x] Activity feed ("John added a task")
 - [x] @mentions in comments
 
-### Scheduling
-- [ ] Assign dates/times to activities
+### Scheduling ✅ COMPLETED
+- [x] Assign dates/times to activities (via voting & calendar)
 - [ ] Calendar integration (Google Calendar, iCal)
 - [ ] Reminder notifications
-- [ ] Itinerary view (day-by-day schedule)
+- [x] Itinerary view (day-by-day schedule)
 
-### User Profiles
-- [ ] User profile pages
-- [ ] Avatar uploads
-- [ ] Bio/preferences
-- [ ] Past trips history
-- [ ] Favorite destinations
+### User Profiles ✅ COMPLETED
+- [x] User profile pages
+- [x] Avatar colors (initials-based avatars)
+- [x] Bio/preferences
+- [x] Past trips history
+- [x] Favorite destinations
 
-### Export & Sharing
-- [ ] Export plan to PDF
-- [ ] Print-friendly itinerary
-- [ ] Share read-only view (public link)
-- [ ] Export expenses to spreadsheet
+### Export & Sharing ✅ COMPLETED
+- [x] Export plan to PDF (via print dialog)
+- [x] Print-friendly itinerary
+- [x] Share invite link (copy to clipboard)
+- [x] Export expenses to spreadsheet (CSV)
 
 ### Mobile App
 - [ ] React Native mobile app

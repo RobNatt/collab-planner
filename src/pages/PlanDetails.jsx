@@ -18,6 +18,9 @@ import { SkeletonText, Skeleton } from '../components/Skeleton';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import ActivityFeed from '../components/ActivityFeed';
 import Comments from '../components/Comments';
+import ExportShare from '../components/ExportShare';
+import ItineraryView from '../components/ItineraryView';
+import { useNotifications } from '../hooks/useNotifications';
 import {
   logTaskCreated,
   logTaskCompleted,
@@ -58,6 +61,7 @@ function PlanDetails() {
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskAssignee, setNewTaskAssignee] = useState('');
   const { colors } = useTheme();
+  const { sendNotification, toggleNotifications, enabled: notificationsEnabled, isSupported: notificationsSupported, requestPermission } = useNotifications();
 
   // Action-specific loading states
   const [addingTask, setAddingTask] = useState(false);
@@ -96,6 +100,8 @@ function PlanDetails() {
   useEffect(() => {
     if (!planId) return;
 
+    let isInitialLoad = true;
+
     // Real-time listener for plan document
     const unsubscribePlan = onSnapshot(
       doc(db, 'plans', planId),
@@ -109,7 +115,16 @@ function PlanDetails() {
             return;
           }
 
-          setPlan(planData);
+          setPlan(prev => {
+            // Notify on member changes (not on initial load)
+            if (!isInitialLoad && prev && prev.members?.length !== planData.members?.length) {
+              sendNotification(`${planData.name}`, {
+                body: 'Members have been updated',
+                tag: 'plan-members',
+              });
+            }
+            return planData;
+          });
         } else {
           toast.error('Plan not found');
           navigate('/dashboard');
@@ -132,6 +147,19 @@ function PlanDetails() {
           id: doc.id,
           ...doc.data()
         }));
+
+        if (!isInitialLoad) {
+          // Check for new or changed activities
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'added' && change.doc.data().createdBy !== auth.currentUser.uid) {
+              sendNotification('New activity added', {
+                body: change.doc.data().title,
+                tag: 'activity-' + change.doc.id,
+              });
+            }
+          });
+        }
+
         setActivities(activitiesData);
       },
       (error) => {
@@ -148,12 +176,27 @@ function PlanDetails() {
           id: doc.id,
           ...doc.data()
         }));
+
+        if (!isInitialLoad) {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'added' && change.doc.data().addedBy !== auth.currentUser.uid) {
+              sendNotification('New expense added', {
+                body: `$${(change.doc.data().amount || 0).toFixed(2)} - ${change.doc.data().description}`,
+                tag: 'expense-' + change.doc.id,
+              });
+            }
+          });
+        }
+
         setExpenses(expensesData);
       },
       (error) => {
         console.error('Error listening to expenses:', error);
       }
     );
+
+    // Mark initial load complete after first snapshots arrive
+    setTimeout(() => { isInitialLoad = false; }, 2000);
 
     // Cleanup listeners on unmount
     return () => {
@@ -789,6 +832,34 @@ function PlanDetails() {
         </button>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {notificationsSupported && (
+            <button
+              onClick={toggleNotifications}
+              title={notificationsEnabled ? 'Notifications on' : 'Enable notifications'}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                border: `1px solid ${colors.border}`,
+                backgroundColor: notificationsEnabled ? `${colors.primary}15` : colors.backgroundTertiary,
+                color: notificationsEnabled ? colors.primary : colors.textMuted,
+                cursor: 'pointer',
+                fontSize: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              {notificationsEnabled ? '🔔' : '🔕'}
+            </button>
+          )}
           <ThemeToggle />
           {plan.admin === auth.currentUser.uid ? (
             <button
@@ -872,7 +943,9 @@ function PlanDetails() {
           { id: 'calendar', label: 'Calendar' },
           { id: 'tasks', label: 'Tasks & Activities' },
           { id: 'expenses', label: 'Expenses' },
+          { id: 'itinerary', label: 'Itinerary' },
           { id: 'analytics', label: 'Analytics' },
+          { id: 'export', label: 'Export' },
           { id: 'activity', label: 'Activity Feed' }
         ].map(tab => (
           <button
@@ -2583,6 +2656,20 @@ function PlanDetails() {
               );
             })()}
           </div>
+        </div>
+      )}
+
+      {/* ITINERARY TAB */}
+      {activeTab === 'itinerary' && (
+        <div className="animate-fadeIn">
+          <ItineraryView plan={plan} activities={activities} expenses={expenses} />
+        </div>
+      )}
+
+      {/* EXPORT TAB */}
+      {activeTab === 'export' && (
+        <div className="animate-fadeIn">
+          <ExportShare plan={plan} activities={activities} expenses={expenses} />
         </div>
       )}
 
