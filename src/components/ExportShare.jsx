@@ -3,6 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useUserProfiles } from '../hooks/useUserProfile';
 import { getUserDisplayName } from '../utils/userHelpers';
 import { auth } from '../config/firebase';
+import { downloadICal, getGoogleCalendarUrl } from '../utils/icalExport';
 import toast from 'react-hot-toast';
 
 function ExportShare({ plan, activities, expenses }) {
@@ -275,6 +276,21 @@ function ExportShare({ plan, activities, expenses }) {
     }
   };
 
+  const handleExportICal = () => {
+    downloadICal(plan, activities);
+    toast.success('Calendar file downloaded! Import into any calendar app.');
+  };
+
+  const handleAddToGoogleCalendar = () => {
+    const url = getGoogleCalendarUrl(plan);
+    if (url) {
+      window.open(url, '_blank');
+      toast.success('Opening Google Calendar...');
+    } else {
+      toast.error('Set trip dates first');
+    }
+  };
+
   const exportOptions = [
     {
       icon: '🖨️',
@@ -289,6 +305,20 @@ function ExportShare({ plan, activities, expenses }) {
       description: 'Save your trip plan as a PDF document',
       action: handleExportPDF,
       color: colors.success,
+    },
+    {
+      icon: '📅',
+      title: 'Export to Calendar (.ics)',
+      description: 'Download for Apple Calendar, Outlook, or any calendar app',
+      action: handleExportICal,
+      color: colors.deepPurple,
+    },
+    {
+      icon: '📆',
+      title: 'Add to Google Calendar',
+      description: 'Open Google Calendar with your trip pre-filled',
+      action: handleAddToGoogleCalendar,
+      color: colors.danger,
     },
     {
       icon: '📊',

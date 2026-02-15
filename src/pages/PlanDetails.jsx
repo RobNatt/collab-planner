@@ -21,6 +21,7 @@ import Comments from '../components/Comments';
 import ExportShare from '../components/ExportShare';
 import ItineraryView from '../components/ItineraryView';
 import { useNotifications } from '../hooks/useNotifications';
+import { useReminders } from '../hooks/useReminders';
 import {
   logTaskCreated,
   logTaskCompleted,
@@ -62,6 +63,7 @@ function PlanDetails() {
   const [newTaskAssignee, setNewTaskAssignee] = useState('');
   const { colors } = useTheme();
   const { sendNotification, toggleNotifications, enabled: notificationsEnabled, isSupported: notificationsSupported, requestPermission } = useNotifications();
+  useReminders(plan, activities);
 
   // Action-specific loading states
   const [addingTask, setAddingTask] = useState(false);

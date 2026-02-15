@@ -1,90 +1,150 @@
-// ========================================
-// IMPORTS
-// ========================================
 import { useState, useEffect } from 'react';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTheme } from '../contexts/ThemeContext';
+import toast from 'react-hot-toast';
 
-// ========================================
-// MAIN COMPONENT
-// ========================================
+const EXPIRATION_OPTIONS = [
+  { label: '24 hours', value: 24 * 60 * 60 * 1000 },
+  { label: '7 days', value: 7 * 24 * 60 * 60 * 1000 },
+  { label: '30 days', value: 30 * 24 * 60 * 60 * 1000 },
+  { label: 'Never', value: 0 },
+];
+
+const MAX_USES_OPTIONS = [
+  { label: 'Unlimited', value: 0 },
+  { label: '5 uses', value: 5 },
+  { label: '10 uses', value: 10 },
+  { label: '25 uses', value: 25 },
+];
+
 function InviteSection({ plan }) {
-  // ========================================
-  // STATE MANAGEMENT
-  // ========================================
   const [inviteCode, setInviteCode] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [expiration, setExpiration] = useState(7 * 24 * 60 * 60 * 1000); // 7 days default
+  const [maxUses, setMaxUses] = useState(0); // unlimited default
+  const [showSettings, setShowSettings] = useState(false);
+  const { colors } = useTheme();
 
-  // ========================================
-  // EFFECTS
-  // ========================================
   useEffect(() => {
-    // Load existing invite code if available
     if (plan.inviteCode) {
       setInviteCode(plan.inviteCode);
     }
   }, [plan]);
 
-  // ========================================
-  // INVITE CODE GENERATION
-  // ========================================
+  // Check if invite is expired
+  const isExpired = () => {
+    if (!plan.inviteExpiresAt) return false;
+    const expiresAt = plan.inviteExpiresAt.toDate
+      ? plan.inviteExpiresAt.toDate()
+      : new Date(plan.inviteExpiresAt);
+    return new Date() > expiresAt;
+  };
+
+  // Check if invite has reached max uses
+  const isMaxedOut = () => {
+    if (!plan.inviteMaxUses || plan.inviteMaxUses === 0) return false;
+    return (plan.inviteUseCount || 0) >= plan.inviteMaxUses;
+  };
+
+  const inviteExpired = isExpired();
+  const inviteMaxed = isMaxedOut();
+  const inviteInvalid = inviteExpired || inviteMaxed;
+
+  // Time remaining display
+  const getTimeRemaining = () => {
+    if (!plan.inviteExpiresAt) return 'Never expires';
+    const expiresAt = plan.inviteExpiresAt.toDate
+      ? plan.inviteExpiresAt.toDate()
+      : new Date(plan.inviteExpiresAt);
+    const diff = expiresAt - new Date();
+    if (diff <= 0) return 'Expired';
+
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    if (days > 0) return `Expires in ${days}d ${hours}h`;
+    if (hours > 0) return `Expires in ${hours}h`;
+    return 'Expires soon';
+  };
+
+  const getUsesDisplay = () => {
+    if (!plan.inviteMaxUses || plan.inviteMaxUses === 0) return 'Unlimited uses';
+    return `${plan.inviteUseCount || 0}/${plan.inviteMaxUses} uses`;
+  };
+
   const generateInviteCode = async () => {
-    // Generate random 8-character code
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    
+
     try {
-      // Save to plan document
-      await updateDoc(doc(db, 'plans', plan.id), {
+      const updateData = {
         inviteCode: code,
         inviteCreatedAt: new Date(),
-        inviteCreatedBy: auth.currentUser.uid
-      });
-      
+        inviteCreatedBy: auth.currentUser.uid,
+        inviteUseCount: 0,
+      };
+
+      // Set expiration
+      if (expiration > 0) {
+        updateData.inviteExpiresAt = new Date(Date.now() + expiration);
+      } else {
+        updateData.inviteExpiresAt = null;
+      }
+
+      // Set max uses
+      updateData.inviteMaxUses = maxUses;
+
+      await updateDoc(doc(db, 'plans', plan.id), updateData);
+
       setInviteCode(code);
-      alert('Invite code generated!');
+      toast.success('Invite code generated!');
     } catch (error) {
       console.error('Error generating invite code:', error);
-      alert('Error generating invite code');
+      toast.error('Error generating invite code');
     }
   };
 
-  // ========================================
-  // COPY TO CLIPBOARD
-  // ========================================
   const copyInviteLink = () => {
     const inviteLink = `${window.location.origin}/join/${inviteCode}`;
-    navigator.clipboard.writeText(inviteLink);
+    navigator.clipboard.writeText(inviteLink).catch(() => {
+      const textArea = document.createElement('textarea');
+      textArea.value = inviteLink;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    });
     setCopied(true);
+    toast.success('Link copied!');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // ========================================
-  // ADMIN CHECK
-  // ========================================
   const isAdmin = plan.admin === auth.currentUser.uid;
 
+  // Non-admin view
   if (!isAdmin) {
-    // Non-admins can see the invite code but not generate new ones
-    if (!inviteCode) return null;
-    
+    if (!inviteCode || inviteInvalid) return null;
+
     return (
       <div style={{
-        backgroundColor: '#e3f2fd',
+        backgroundColor: `${colors.primary}10`,
         padding: '20px',
-        borderRadius: '8px',
-        marginBottom: '20px'
+        borderRadius: '12px',
+        border: `1px solid ${colors.primary}30`,
       }}>
-        <h3>📨 Invite Link</h3>
-        <p style={{ color: '#666' }}>Share this link to invite others:</p>
+        <h3 style={{ marginTop: 0, color: colors.text }}>Invite Link</h3>
+        <p style={{ color: colors.textSecondary, fontSize: '14px' }}>Share this link to invite others:</p>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <code style={{
             flex: 1,
-            padding: '10px',
-            backgroundColor: 'white',
-            borderRadius: '4px',
-            border: '1px solid #ddd'
+            padding: '10px 14px',
+            backgroundColor: colors.inputBg,
+            borderRadius: '8px',
+            border: `1px solid ${colors.border}`,
+            color: colors.text,
+            fontSize: '13px',
+            wordBreak: 'break-all',
           }}>
             {window.location.origin}/join/{inviteCode}
           </code>
@@ -92,65 +152,188 @@ function InviteSection({ plan }) {
             onClick={copyInviteLink}
             style={{
               padding: '10px 20px',
-              backgroundColor: copied ? '#4CAF50' : '#2196F3',
+              backgroundColor: copied ? colors.success : colors.primary,
               color: 'white',
               border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '500',
+              fontSize: '14px',
+              whiteSpace: 'nowrap',
             }}
           >
-            {copied ? '✓ Copied!' : 'Copy Link'}
+            {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
       </div>
     );
   }
 
-  // ========================================
-  // RENDER (ADMIN VIEW)
-  // ========================================
+  // Admin view
   return (
     <div style={{
-      backgroundColor: '#e3f2fd',
-      padding: '20px',
-      borderRadius: '8px',
-      marginBottom: '20px'
+      backgroundColor: `${colors.primary}10`,
+      padding: '24px',
+      borderRadius: '12px',
+      border: `1px solid ${colors.primary}30`,
     }}>
-      <h3>📨 Invite Members</h3>
-      
-      {!inviteCode ? (
-        // No invite code yet
+      <h3 style={{ marginTop: 0, color: colors.text }}>Invite Members</h3>
+
+      {!inviteCode || inviteInvalid ? (
         <div>
-          <p style={{ color: '#666' }}>Generate an invite link to share with others.</p>
+          <p style={{ color: colors.textSecondary, fontSize: '14px', marginBottom: '16px' }}>
+            {inviteExpired
+              ? 'Your previous invite has expired. Generate a new one.'
+              : inviteMaxed
+                ? 'Your previous invite has reached its usage limit. Generate a new one.'
+                : 'Generate an invite link to share with others.'}
+          </p>
+
+          {/* Settings */}
+          <div style={{
+            display: 'flex',
+            gap: '16px',
+            marginBottom: '16px',
+            flexWrap: 'wrap',
+          }}>
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: colors.text,
+                marginBottom: '6px',
+              }}>
+                Expiration
+              </label>
+              <select
+                value={expiration}
+                onChange={(e) => setExpiration(Number(e.target.value))}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.inputBg,
+                  color: colors.text,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                {EXPIRATION_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: colors.text,
+                marginBottom: '6px',
+              }}>
+                Max Uses
+              </label>
+              <select
+                value={maxUses}
+                onChange={(e) => setMaxUses(Number(e.target.value))}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.inputBg,
+                  color: colors.text,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                {MAX_USES_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <button
             onClick={generateInviteCode}
             style={{
-              padding: '10px 20px',
-              backgroundColor: '#2196F3',
+              padding: '12px 24px',
+              backgroundColor: colors.primary,
               color: 'white',
               border: 'none',
-              borderRadius: '5px',
+              borderRadius: '8px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: '600',
+              fontSize: '15px',
+              transition: 'all 0.2s ease',
             }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
             Generate Invite Link
           </button>
         </div>
       ) : (
-        // Invite code exists
         <div>
-          <p style={{ color: '#666' }}>Share this link or QR code to invite others:</p>
-          
+          {/* Status badges */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px',
+            flexWrap: 'wrap',
+          }}>
+            <span style={{
+              padding: '4px 12px',
+              backgroundColor: colors.successLight,
+              color: colors.success,
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '600',
+            }}>
+              Active
+            </span>
+            <span style={{
+              padding: '4px 12px',
+              backgroundColor: colors.backgroundTertiary,
+              color: colors.textMuted,
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '500',
+            }}>
+              {getTimeRemaining()}
+            </span>
+            <span style={{
+              padding: '4px 12px',
+              backgroundColor: colors.backgroundTertiary,
+              color: colors.textMuted,
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: '500',
+            }}>
+              {getUsesDisplay()}
+            </span>
+          </div>
+
           {/* Invite Link */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '15px' }}>
+          <p style={{ color: colors.textSecondary, fontSize: '14px', marginBottom: '12px' }}>
+            Share this link or QR code to invite others:
+          </p>
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center',
+            marginBottom: '16px',
+          }}>
             <code style={{
               flex: 1,
-              padding: '10px',
-              backgroundColor: 'white',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
-              fontSize: '14px'
+              padding: '10px 14px',
+              backgroundColor: colors.inputBg,
+              borderRadius: '8px',
+              border: `1px solid ${colors.border}`,
+              color: colors.text,
+              fontSize: '13px',
+              wordBreak: 'break-all',
             }}>
               {window.location.origin}/join/{inviteCode}
             </code>
@@ -158,64 +341,162 @@ function InviteSection({ plan }) {
               onClick={copyInviteLink}
               style={{
                 padding: '10px 20px',
-                backgroundColor: copied ? '#4CAF50' : '#2196F3',
+                backgroundColor: copied ? colors.success : colors.primary,
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '500',
+                fontSize: '14px',
+                whiteSpace: 'nowrap',
               }}
             >
-              {copied ? '✓ Copied!' : 'Copy'}
+              {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
 
-          {/* QR Code Toggle */}
-          <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setShowQR(!showQR)}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#673AB7',
+                backgroundColor: colors.deepPurple,
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
               }}
             >
-              {showQR ? 'Hide QR Code' : 'Show QR Code'}
+              {showQR ? 'Hide QR' : 'Show QR'}
             </button>
-            
+
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: colors.backgroundTertiary,
+                color: colors.textSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+              }}
+            >
+              Settings
+            </button>
+
             <button
               onClick={generateInviteCode}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#FF9800',
+                backgroundColor: colors.warning,
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
               }}
             >
-              Regenerate Code
+              Regenerate
             </button>
           </div>
+
+          {/* Settings Panel */}
+          {showSettings && (
+            <div style={{
+              marginTop: '16px',
+              padding: '16px',
+              backgroundColor: colors.cardBg,
+              borderRadius: '10px',
+              border: `1px solid ${colors.border}`,
+            }}>
+              <h4 style={{ margin: '0 0 12px 0', color: colors.text, fontSize: '14px' }}>
+                Invite Settings
+              </h4>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: colors.textMuted,
+                    marginBottom: '4px',
+                  }}>
+                    Expiration
+                  </label>
+                  <select
+                    value={expiration}
+                    onChange={(e) => setExpiration(Number(e.target.value))}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${colors.border}`,
+                      backgroundColor: colors.inputBg,
+                      color: colors.text,
+                      fontSize: '13px',
+                    }}
+                  >
+                    {EXPIRATION_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: colors.textMuted,
+                    marginBottom: '4px',
+                  }}>
+                    Max Uses
+                  </label>
+                  <select
+                    value={maxUses}
+                    onChange={(e) => setMaxUses(Number(e.target.value))}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${colors.border}`,
+                      backgroundColor: colors.inputBg,
+                      color: colors.text,
+                      fontSize: '13px',
+                    }}
+                  >
+                    {MAX_USES_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <p style={{ color: colors.textMuted, fontSize: '12px', marginTop: '8px', marginBottom: 0 }}>
+                Changes apply when you regenerate the invite code.
+              </p>
+            </div>
+          )}
 
           {/* QR Code Display */}
           {showQR && (
             <div style={{
-              marginTop: '20px',
-              padding: '20px',
+              marginTop: '16px',
+              padding: '24px',
               backgroundColor: 'white',
-              borderRadius: '8px',
-              textAlign: 'center'
+              borderRadius: '12px',
+              textAlign: 'center',
+              border: `1px solid ${colors.border}`,
             }}>
-              <QRCodeSVG 
+              <QRCodeSVG
                 value={`${window.location.origin}/join/${inviteCode}`}
                 size={200}
                 level="H"
                 includeMargin={true}
               />
-              <p style={{ marginTop: '10px', color: '#666', fontSize: '14px' }}>
+              <p style={{ marginTop: '12px', color: '#666', fontSize: '14px', marginBottom: 0 }}>
                 Scan to join {plan.name}
               </p>
             </div>

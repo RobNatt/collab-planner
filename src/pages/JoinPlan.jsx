@@ -3,7 +3,7 @@
 // ========================================
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -65,6 +65,27 @@ function JoinPlan() {
         return;
       }
 
+      // Check invite expiration
+      if (planData.inviteExpiresAt) {
+        const expiresAt = planData.inviteExpiresAt.toDate
+          ? planData.inviteExpiresAt.toDate()
+          : new Date(planData.inviteExpiresAt);
+        if (new Date() > expiresAt) {
+          setError('This invite link has expired. Ask the plan admin for a new one.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Check max uses
+      if (planData.inviteMaxUses && planData.inviteMaxUses > 0) {
+        if ((planData.inviteUseCount || 0) >= planData.inviteMaxUses) {
+          setError('This invite link has reached its usage limit. Ask the plan admin for a new one.');
+          setLoading(false);
+          return;
+        }
+      }
+
       setPlan(planData);
     } catch (error) {
       console.error('Error fetching plan:', error);
@@ -82,7 +103,8 @@ function JoinPlan() {
 
     try {
       await updateDoc(doc(db, 'plans', plan.id), {
-        members: arrayUnion(auth.currentUser.uid)
+        members: arrayUnion(auth.currentUser.uid),
+        inviteUseCount: increment(1),
       });
 
       // Log activity

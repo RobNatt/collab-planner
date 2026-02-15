@@ -60,8 +60,8 @@
 - [x] Join plan via invite code
 - [x] QR code for invite links
 - [x] Redirect flow for unauthenticated users
-- [ ] Email invite functionality (optional)
-- [ ] Invite expiration/limits
+- [ ] Email invite functionality (requires email API)
+- [x] Invite expiration/limits
 
 #### Member Management ✅
 - [x] Display all plan members
@@ -159,8 +159,8 @@
 
 ### Scheduling ✅ COMPLETED
 - [x] Assign dates/times to activities (via voting & calendar)
-- [ ] Calendar integration (Google Calendar, iCal)
-- [ ] Reminder notifications
+- [x] Calendar integration (iCal export + Google Calendar URL)
+- [x] Reminder notifications (browser-based for upcoming tasks/trips)
 - [x] Itinerary view (day-by-day schedule)
 
 ### User Profiles ✅ COMPLETED
