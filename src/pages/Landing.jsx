@@ -319,9 +319,153 @@ function Landing() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" style={{
+        padding: '100px 40px',
+        backgroundColor: colors.background,
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{
+            fontSize: 'clamp(28px, 4vw, 42px)',
+            fontWeight: '700',
+            color: colors.text,
+            marginBottom: '16px',
+          }}>
+            Simple, One-Time Pricing
+          </h2>
+          <p style={{
+            color: colors.textSecondary,
+            fontSize: '18px',
+            marginBottom: '16px',
+          }}>
+            Lock in lifetime access before spots run out.
+          </p>
+          <div style={{
+            display: 'inline-block',
+            padding: '8px 20px',
+            backgroundColor: `${colors.danger}15`,
+            border: `1px solid ${colors.danger}40`,
+            borderRadius: '20px',
+            color: colors.danger,
+            fontWeight: '700',
+            fontSize: '14px',
+            marginBottom: '40px',
+          }}>
+            Limited: Only 127 of 500 spots available
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '24px',
+            textAlign: 'left',
+          }}>
+            {/* Free */}
+            <div style={{
+              padding: '32px',
+              backgroundColor: colors.cardBg,
+              borderRadius: '16px',
+              border: `1px solid ${colors.border}`,
+            }}>
+              <h3 style={{ color: colors.textSecondary, fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Free</h3>
+              <div style={{ fontSize: '36px', fontWeight: '800', color: colors.text, marginBottom: '4px' }}>$0</div>
+              <p style={{ color: colors.textSecondary, fontSize: '14px', marginBottom: '20px' }}>Forever free</p>
+              <button
+                onClick={() => navigate('/login?signup=true')}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  backgroundColor: 'transparent',
+                  color: colors.text,
+                  border: `2px solid ${colors.border}`,
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  marginBottom: '20px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.backgroundTertiary}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                Get Started
+              </button>
+              {['1 trip plan', 'Up to 3 members', 'Max 4-day trips', 'Basic task management'].map((f, i) => (
+                <div key={i} style={{ padding: '6px 0', color: colors.textSecondary, fontSize: '14px', display: 'flex', gap: '8px' }}>
+                  <span style={{ color: colors.success }}>✓</span> {f}
+                </div>
+              ))}
+            </div>
+
+            {/* LTD */}
+            <div style={{
+              padding: '32px',
+              backgroundColor: colors.cardBg,
+              borderRadius: '16px',
+              border: `2px solid ${colors.primary}`,
+              position: 'relative',
+              boxShadow: `0 4px 24px ${colors.primary}22`,
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-12px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                padding: '4px 14px',
+                backgroundColor: colors.primary,
+                color: 'white',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+              }}>
+                Best Value
+              </div>
+              <h3 style={{ color: colors.primary, fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Lifetime Deal</h3>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '36px', fontWeight: '800', color: colors.text }}>$49</span>
+                <span style={{ color: colors.textSecondary, textDecoration: 'line-through' }}>$199</span>
+              </div>
+              <p style={{ color: colors.textSecondary, fontSize: '14px', marginBottom: '20px' }}>One-time, lifetime access</p>
+              <button
+                onClick={() => navigate('/pricing')}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  backgroundColor: colors.primary,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  marginBottom: '20px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = `0 4px 16px ${colors.primary}44`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                Get Lifetime Access
+              </button>
+              {['Unlimited plans & members', 'Any trip duration', 'Advanced expenses + CSV export', 'Calendar & iCal export', 'Analytics dashboard', 'All future updates'].map((f, i) => (
+                <div key={i} style={{ padding: '6px 0', color: colors.text, fontSize: '14px', display: 'flex', gap: '8px', fontWeight: i < 2 ? '600' : '400' }}>
+                  <span style={{ color: colors.primary }}>✓</span> {f}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section style={{
         padding: '80px 40px',
-        backgroundColor: colors.background,
+        backgroundColor: colors.backgroundSecondary,
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
@@ -449,7 +593,7 @@ function Landing() {
           {['About', 'Features', 'Pricing', 'Contact', 'Privacy', 'Terms'].map((link) => (
             <a
               key={link}
-              href="#"
+              href={link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : '#'}
               style={{
                 color: colors.textSecondary,
                 textDecoration: 'none',

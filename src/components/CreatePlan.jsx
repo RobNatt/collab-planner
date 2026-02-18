@@ -3,6 +3,8 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { LoadingSpinner } from './LoadingSpinner';
+import { UpgradeModal } from './UpgradeModal';
+import { useLicense } from '../hooks/useLicense';
 import toast from 'react-hot-toast';
 
 function CreatePlan({ onPlanCreated }) {
@@ -11,10 +13,24 @@ function CreatePlan({ onPlanCreated }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const { colors } = useTheme();
+  const { isLTD } = useLicense(auth.currentUser?.uid);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check trip duration gate for free users
+    if (startDate && endDate && !isLTD) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      if (days > 4) {
+        setShowUpgrade(true);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -209,6 +225,7 @@ function CreatePlan({ onPlanCreated }) {
           {loading ? 'Creating Plan...' : 'Create Plan'}
         </button>
       </form>
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
     </div>
   );
 }

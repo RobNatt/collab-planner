@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -52,6 +52,17 @@ function Login() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         sendEmailVerification(userCredential.user).catch(() => {});
         toast.success('Account created! Check your email to verify.');
+
+        // Track signup: decrement spots counter and log notification
+        updateDoc(doc(db, 'appStats', 'counters'), {
+          spotsRemaining: increment(-1),
+          totalSignups: increment(1),
+        }).catch(() => {});
+        addDoc(collection(db, 'signupNotifications'), {
+          email: userCredential.user.email,
+          uid: userCredential.user.uid,
+          signedUpAt: serverTimestamp(),
+        }).catch(() => {});
 
         // Check for invite or redirect, otherwise go to welcome
         const redirectPath = searchParams.get('redirect');

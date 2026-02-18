@@ -9,6 +9,8 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { SkeletonList } from '../components/Skeleton';
+import { useLicense } from '../hooks/useLicense';
+import { LTDBadge } from '../components/LTDBadge';
 import toast from 'react-hot-toast';
 
 function Dashboard() {
@@ -17,6 +19,7 @@ function Dashboard() {
   const { profile, loading } = useUserProfile(auth.currentUser?.uid, refreshKey);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const { colors } = useTheme();
+  const { isLTD } = useLicense(auth.currentUser?.uid);
 
   const handleLogout = async () => {
     try {
@@ -159,6 +162,42 @@ function Dashboard() {
               </button>
             </div>
           )}
+          {!isLTD && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: `${colors.primary}10`,
+              border: `1px solid ${colors.primary}30`,
+              borderRadius: '8px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}>
+              <span style={{ color: colors.text, fontSize: '14px' }}>
+                ★ Unlock unlimited plans, members, and trip duration with Lifetime Access.
+              </span>
+              <button
+                onClick={() => navigate('/pricing')}
+                style={{
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  backgroundColor: colors.primary,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                Get Lifetime Access — $49
+              </button>
+            </div>
+          )}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -180,8 +219,12 @@ function Dashboard() {
                   color: colors.textSecondary,
                   margin: '4px 0 0 0',
                   fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}>
                   Welcome back, {profile.displayName}
+                  {isLTD && <LTDBadge />}
                 </p>
               )}
             </div>
@@ -214,6 +257,34 @@ function Dashboard() {
                 title="View Profile"
               >
                 {profile?.displayName ? profile.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?'}
+              </button>
+              <button
+                onClick={() => navigate('/feedback')}
+                title="Feedback"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  backgroundColor: colors.backgroundTertiary,
+                  color: colors.textSecondary,
+                  border: `1px solid ${colors.border}`,
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
+                  e.currentTarget.style.color = colors.primary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.backgroundTertiary;
+                  e.currentTarget.style.color = colors.textSecondary;
+                }}
+              >
+                💬
               </button>
               <ThemeToggle />
               <button
