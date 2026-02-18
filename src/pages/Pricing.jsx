@@ -48,10 +48,11 @@ function Pricing() {
       return;
     }
 
-    // Open LemonSqueezy checkout with user email prefilled
+    // Open LemonSqueezy checkout with user email prefilled and redirect back to success page
+    const successUrl = `${window.location.origin}/purchase-success`;
     const separator = checkoutUrl.includes('?') ? '&' : '?';
-    const fullUrl = `${checkoutUrl}${separator}checkout[email]=${encodeURIComponent(auth.currentUser.email)}&checkout[custom][user_id]=${auth.currentUser.uid}`;
-    window.open(fullUrl, '_blank');
+    const fullUrl = `${checkoutUrl}${separator}checkout[email]=${encodeURIComponent(auth.currentUser.email)}&checkout[custom][user_id]=${auth.currentUser.uid}&checkout[success_url]=${encodeURIComponent(successUrl)}`;
+    window.location.href = fullUrl;
   };
 
   const handleWaitlist = async (e) => {
