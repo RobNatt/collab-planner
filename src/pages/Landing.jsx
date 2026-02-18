@@ -39,7 +39,6 @@ function Landing() {
           fontWeight: 'bold',
           color: colors.primary,
         }}>
-          {/* AD COPY: Replace with your brand logo/name */}
           Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -91,10 +90,6 @@ function Landing() {
         </div>
       </nav>
 
-      {/* ================================================================
-          HERO SECTION - Main headline and call-to-action
-          AD COPY LOCATION: Update headline, subheadline, and CTA text
-          ================================================================ */}
       <section style={{
         padding: '80px 40px',
         maxWidth: '1200px',
@@ -102,7 +97,6 @@ function Landing() {
         textAlign: 'center',
       }}>
         <div className="animate-fadeIn">
-          {/* AD COPY: Main headline - Make it compelling and benefit-focused */}
           <h1 style={{
             fontSize: 'clamp(36px, 5vw, 64px)',
             fontWeight: '800',
@@ -114,7 +108,6 @@ function Landing() {
             <span style={{ color: colors.primary }}>Adventure Together</span>
           </h1>
 
-          {/* AD COPY: Subheadline - Explain the value proposition */}
           <p style={{
             fontSize: 'clamp(18px, 2vw, 22px)',
             color: colors.textSecondary,
@@ -126,7 +119,6 @@ function Landing() {
             Organize tasks, track expenses, and keep everyone on the same page.
           </p>
 
-          {/* AD COPY: Primary CTA button */}
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => navigate('/login?signup=true')}
@@ -186,7 +178,6 @@ function Landing() {
           boxShadow: `0 8px 32px ${colors.shadow}`,
           border: `1px solid ${colors.border}`,
         }}>
-          {/* AD COPY: Add a screenshot or illustration of your app here */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -207,16 +198,11 @@ function Landing() {
         </div>
       </section>
 
-      {/* ================================================================
-          FEATURES SECTION - Highlight key features
-          AD COPY LOCATION: Update feature titles and descriptions
-          ================================================================ */}
       <section id="features" style={{
         padding: '100px 40px',
         backgroundColor: colors.backgroundSecondary,
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* AD COPY: Section headline */}
           <h2 style={{
             fontSize: 'clamp(28px, 4vw, 42px)',
             fontWeight: '700',
@@ -233,7 +219,6 @@ function Landing() {
             margin: '0 auto 60px',
             fontSize: '18px',
           }}>
-            {/* AD COPY: Section subheadline */}
             From brainstorming to booking, we've got you covered.
           </p>
 
@@ -242,7 +227,6 @@ function Landing() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '30px',
           }}>
-            {/* AD COPY: Feature cards - Update icons, titles, and descriptions */}
             {[
               {
                 icon: '✅',
@@ -335,16 +319,11 @@ function Landing() {
         </div>
       </section>
 
-      {/* ================================================================
-          SOCIAL PROOF SECTION - Testimonials or stats
-          AD COPY LOCATION: Add testimonials, user count, or trust badges
-          ================================================================ */}
       <section style={{
         padding: '80px 40px',
         backgroundColor: colors.background,
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          {/* AD COPY: Add social proof - testimonials, user stats, or trust badges */}
           <h2 style={{
             fontSize: 'clamp(24px, 3vw, 36px)',
             fontWeight: '700',
@@ -362,7 +341,6 @@ function Landing() {
             flexWrap: 'wrap',
             marginBottom: '60px',
           }}>
-            {/* AD COPY: Update these stats with real numbers */}
             {[
               { number: '1,000+', label: 'Plans Created' },
               { number: '5,000+', label: 'Tasks Completed' },
@@ -382,7 +360,6 @@ function Landing() {
           </div>
 
           {/* Testimonial placeholder */}
-          {/* AD COPY: Add real testimonials from users */}
           <div style={{
             maxWidth: '700px',
             margin: '0 auto',
@@ -408,17 +385,12 @@ function Landing() {
         </div>
       </section>
 
-      {/* ================================================================
-          CTA SECTION - Final call-to-action
-          AD COPY LOCATION: Update the final CTA headline and button
-          ================================================================ */}
       <section style={{
         padding: '100px 40px',
         backgroundColor: colors.primary,
         textAlign: 'center',
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          {/* AD COPY: Final CTA headline */}
           <h2 style={{
             fontSize: 'clamp(28px, 4vw, 42px)',
             fontWeight: '700',
@@ -432,7 +404,6 @@ function Landing() {
             fontSize: '18px',
             marginBottom: '40px',
           }}>
-            {/* AD COPY: Final CTA subheadline */}
             Join thousands of groups who plan smarter, not harder.
           </p>
           <button
@@ -462,10 +433,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* ================================================================
-          FOOTER
-          AD COPY LOCATION: Update links and copyright
-          ================================================================ */}
       <footer style={{
         padding: '40px',
         backgroundColor: colors.backgroundSecondary,
@@ -479,7 +446,6 @@ function Landing() {
           marginBottom: '20px',
           flexWrap: 'wrap',
         }}>
-          {/* AD COPY: Add your footer links */}
           {['About', 'Features', 'Pricing', 'Contact', 'Privacy', 'Terms'].map((link) => (
             <a
               key={link}
@@ -497,8 +463,7 @@ function Landing() {
           ))}
         </div>
         <p style={{ color: colors.textMuted, fontSize: '14px' }}>
-          {/* AD COPY: Update copyright */}
-          © 2025 Collab Planner. All rights reserved.
+© 2026 Collab Planner. All rights reserved.
         </p>
       </footer>
     </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
@@ -14,6 +14,7 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [resetSent, setResetSent] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { colors } = useTheme();
@@ -48,8 +49,9 @@ function Login() {
 
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        toast.success('Account created successfully!');
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        sendEmailVerification(userCredential.user).catch(() => {});
+        toast.success('Account created! Check your email to verify.');
 
         // Check for invite or redirect, otherwise go to welcome
         const redirectPath = searchParams.get('redirect');
@@ -96,6 +98,27 @@ function Login() {
       toast.error(isSignUp ? 'Failed to create account' : 'Failed to login');
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address first.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setResetSent(true);
+      setError('');
+      toast.success('Password reset email sent! Check your inbox.');
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email.');
+      } else {
+        setError('Failed to send reset email. Please try again.');
+      }
+    }
+    setLoading(false);
   };
 
   const inputStyle = {
@@ -290,7 +313,45 @@ function Login() {
                 e.target.style.boxShadow = 'none';
               }}
             />
+            {!isSignUp && (
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={loading}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: colors.primary,
+                  fontSize: '13px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  padding: '6px 0',
+                  marginTop: '4px',
+                  transition: 'opacity 0.2s ease',
+                  opacity: loading ? 0.5 : 1,
+                }}
+                onMouseEnter={(e) => { if (!loading) e.currentTarget.style.textDecoration = 'underline'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
+              >
+                Forgot password?
+              </button>
+            )}
           </div>
+          {resetSent && (
+            <div
+              className="animate-fadeIn"
+              style={{
+                color: colors.success,
+                marginBottom: '16px',
+                padding: '12px 16px',
+                backgroundColor: `${colors.success}15`,
+                borderRadius: '8px',
+                border: `1px solid ${colors.success}`,
+                fontSize: '14px',
+              }}
+            >
+              Reset email sent! Check your inbox and spam folder.
+            </div>
+          )}
           <button
             type="submit"
             disabled={loading}

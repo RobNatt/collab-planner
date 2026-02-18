@@ -2,14 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAl85Bm9CVyNbhf2UrsX1qUxTPsPHPa3uY",
-  authDomain: "collab-planner-757e3.firebaseapp.com",
-  projectId: "collab-planner-757e3",
-  storageBucket: "collab-planner-757e3.firebasestorage.app",
-  messagingSenderId: "892585668643",
-  appId: "1:892585668643:web:20465e17c9f803de2a0196"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase

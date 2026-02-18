@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import PlanDetails from './pages/PlanDetails';
 import JoinPlan from './pages/JoinPlan';
 import Profile from './pages/Profile';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/plan/:planId" element={<PlanDetails />} />
         <Route path="/join/:inviteCode" element={<JoinPlan />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
+import { signOut, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import CreatePlan from '../components/CreatePlan';
 import PlansList from '../components/PlansList';
@@ -94,6 +94,15 @@ function Dashboard() {
     );
   }
 
+  const handleResendVerification = async () => {
+    try {
+      await sendEmailVerification(auth.currentUser);
+      toast.success('Verification email sent! Check your inbox.');
+    } catch {
+      toast.error('Please wait before requesting another email.');
+    }
+  };
+
   return (
     <>
       {showProfileSetup && <UserProfileSetup onComplete={handleProfileComplete} />}
@@ -117,6 +126,39 @@ function Dashboard() {
             transition: 'all 0.3s ease',
           }}
         >
+          {auth.currentUser && !auth.currentUser.emailVerified && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: `${colors.warning}15`,
+              border: `1px solid ${colors.warning}`,
+              borderRadius: '8px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}>
+              <span style={{ color: colors.text, fontSize: '14px' }}>
+                Please verify your email address to secure your account.
+              </span>
+              <button
+                onClick={handleResendVerification}
+                style={{
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  backgroundColor: colors.warning,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                }}
+              >
+                Resend Email
+              </button>
+            </div>
+          )}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
