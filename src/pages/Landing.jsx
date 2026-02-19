@@ -1,23 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 
 function Landing() {
   const navigate = useNavigate();
   const { colors } = useTheme();
-
-  // Redirect if already logged in
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navigate('/dashboard');
-      }
-    });
-    return () => unsubscribe();
-  }, [navigate]);
 
   return (
     <div style={{
