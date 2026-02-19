@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../config/firebase';
@@ -18,6 +18,7 @@ function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const { profile, loading } = useUserProfile(auth.currentUser?.uid, refreshKey);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const setupDismissed = useRef(false);
   const { colors } = useTheme();
   const { isLTD } = useLicense(auth.currentUser?.uid);
 
@@ -37,12 +38,13 @@ function Dashboard() {
   };
 
   const handleProfileComplete = () => {
+    setupDismissed.current = true;
     setShowProfileSetup(false);
     setRefreshKey(prev => prev + 1);
   };
 
   useEffect(() => {
-    if (!loading && !profile && !showProfileSetup) {
+    if (!loading && !profile && !showProfileSetup && !setupDismissed.current) {
       setShowProfileSetup(true);
     }
   }, [loading, profile, showProfileSetup]);
