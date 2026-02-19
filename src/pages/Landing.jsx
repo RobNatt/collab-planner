@@ -593,7 +593,7 @@ function Landing() {
           {['About', 'Features', 'Pricing', 'Contact', 'Privacy', 'Terms'].map((link) => (
             <a
               key={link}
-              href={link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : '#'}
+              href={link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : link === 'Terms' ? '/terms' : '#'}
               style={{
                 color: colors.textSecondary,
                 textDecoration: 'none',
