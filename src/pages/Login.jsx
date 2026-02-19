@@ -2,11 +2,24 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc, updateDoc, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import emailjs from '@emailjs/browser';
 import { auth, db } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
+
+const sendSignupNotification = (email) => {
+  const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+  if (!serviceId || !templateId || !publicKey) return;
+
+  emailjs.send(serviceId, templateId, {
+    user_email: email,
+    signup_time: new Date().toLocaleString(),
+  }, publicKey).catch(() => {});
+};
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -63,6 +76,7 @@ function Login() {
           uid: userCredential.user.uid,
           signedUpAt: serverTimestamp(),
         }).catch(() => {});
+        sendSignupNotification(userCredential.user.email);
 
         // Check for invite or redirect, otherwise go to welcome
         const redirectPath = searchParams.get('redirect');
