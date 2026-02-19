@@ -37,8 +37,8 @@ function Pricing() {
   }, []);
 
   const handleCheckout = () => {
-    const checkoutUrl = import.meta.env.VITE_LEMONSQUEEZY_CHECKOUT_URL;
-    if (!checkoutUrl) {
+    const paymentLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK;
+    if (!paymentLink) {
       toast.error('Payment system is being configured. Please try again soon.');
       return;
     }
@@ -48,10 +48,8 @@ function Pricing() {
       return;
     }
 
-    // Open LemonSqueezy checkout with user email prefilled and redirect back to success page
-    const successUrl = `${window.location.origin}/purchase-success`;
-    const separator = checkoutUrl.includes('?') ? '&' : '?';
-    const fullUrl = `${checkoutUrl}${separator}checkout[email]=${encodeURIComponent(auth.currentUser.email)}&checkout[custom][user_id]=${auth.currentUser.uid}&checkout[success_url]=${encodeURIComponent(successUrl)}`;
+    // Redirect to Stripe Payment Link with email prefilled and user ID for tracking
+    const fullUrl = `${paymentLink}?prefilled_email=${encodeURIComponent(auth.currentUser.email)}&client_reference_id=${auth.currentUser.uid}`;
     window.location.href = fullUrl;
   };
 
