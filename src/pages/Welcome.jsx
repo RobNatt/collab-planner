@@ -7,11 +7,20 @@ import { useTheme } from '../contexts/ThemeContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
 
+const AVATAR_COLORS = [
+  '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#f44336',
+  '#00BCD4', '#E91E63', '#673AB7', '#3F51B5', '#009688',
+];
+
 function Welcome() {
   const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [displayName, setDisplayName] = useState('');
+  const [avatarColor, setAvatarColor] = useState(
+    AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
+  );
   const navigate = useNavigate();
   const { colors } = useTheme();
 
@@ -74,9 +83,10 @@ function Welcome() {
     },
     {
       icon: '🚀',
-      title: "You're All Set!",
-      description: "That's everything you need to know to get started. Create your first plan and start collaborating!",
-      tip: "Let's go!",
+      title: "One Last Thing — Set Up Your Profile",
+      description: "Tell your trip partners who you are. Pick a color and enter your name to get started.",
+      tip: "You can update your profile anytime from the dashboard.",
+      isProfileStep: true,
     },
   ];
 
@@ -87,34 +97,60 @@ function Welcome() {
       return;
     }
 
+    if (!displayName.trim()) {
+      toast.error('Please enter your name to continue');
+      return;
+    }
+
     setSaving(true);
     try {
-      // Mark tutorial as completed in user profile
+      // Save user profile so Dashboard never shows the setup modal
+      await setDoc(doc(db, 'users', user.uid), {
+        displayName: displayName.trim(),
+        avatarColor,
+        email: user.email,
+        phoneNumber: '',
+        bio: '',
+        favoriteDestinations: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Mark tutorial completed
       await setDoc(doc(db, 'userProfiles', user.uid), {
         tutorialCompleted: true,
         tutorialCompletedAt: new Date(),
       }, { merge: true });
 
       toast.success('Welcome to Collab Planner!');
-      // Use window.location for more reliable navigation
       window.location.href = '/dashboard';
     } catch (error) {
-      console.error('Error saving tutorial status:', error);
+      console.error('Error saving profile:', error);
       toast.error('Setup error, redirecting anyway...');
-      // Still navigate to dashboard even if saving fails
       window.location.href = '/dashboard';
     }
   };
 
   const handleSkip = async () => {
     if (!user) {
-      toast.error('Please log in first');
       navigate('/login');
       return;
     }
 
     setSaving(true);
     try {
+      // Save a minimal profile so the Dashboard modal never fires
+      await setDoc(doc(db, 'users', user.uid), {
+        displayName: user.email.split('@')[0],
+        avatarColor: AVATAR_COLORS[0],
+        email: user.email,
+        phoneNumber: '',
+        bio: '',
+        favoriteDestinations: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
       await setDoc(doc(db, 'userProfiles', user.uid), {
         tutorialCompleted: true,
         tutorialSkipped: true,
@@ -123,7 +159,7 @@ function Welcome() {
       toast.success('Welcome to Collab Planner!');
       window.location.href = '/dashboard';
     } catch (error) {
-      console.error('Error saving tutorial status:', error);
+      console.error('Error saving profile:', error);
       window.location.href = '/dashboard';
     }
   };
@@ -257,6 +293,70 @@ function Welcome() {
               <span>{step.tip}</span>
             </div>
           </div>
+
+          {/* Profile setup form — only on last step */}
+          {step.isProfileStep && (
+            <div style={{ marginBottom: '24px' }}>
+              {/* Avatar preview + color picker */}
+              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: avatarColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  margin: '0 auto 12px',
+                  transition: 'background-color 0.2s ease',
+                }}>
+                  {displayName ? displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?'}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {AVATAR_COLORS.map(color => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setAvatarColor(color)}
+                      style={{
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '50%',
+                        backgroundColor: color,
+                        border: avatarColor === color ? `3px solid ${colors.text}` : '2px solid transparent',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+              {/* Name input */}
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Your name (e.g. John Smith)"
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '16px',
+                  backgroundColor: colors.inputBg,
+                  border: `1px solid ${colors.inputBorder}`,
+                  borderRadius: '10px',
+                  color: colors.text,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => e.target.style.borderColor = colors.primary}
+                onBlur={(e) => e.target.style.borderColor = colors.inputBorder}
+              />
+            </div>
+          )}
 
           {/* Step Indicators */}
           <div style={{
