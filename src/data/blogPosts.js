@@ -4,6 +4,128 @@
 
 const blogPosts = [
   {
+    slug: 'travel-planner-vs-spreadsheet',
+    title: 'Travel Planner vs Spreadsheet: Why a Dedicated Tool Is Better',
+    excerpt: 'Spreadsheets work — but they were never built for travel. Here\'s why a dedicated collaborative travel planner beats traditional spreadsheet trip planning for group trips.',
+    date: '2026-02-20',
+    readTime: '3 min read',
+    category: 'Travel Tips',
+    coverEmoji: '📊',
+    tags: ['travel planner', 'spreadsheet', 'group trip planning', 'online travel planner'],
+    content: `
+For a long time, spreadsheets were the default tool for planning trips. They were flexible, customizable, and familiar.
+
+But they were never designed specifically for travel.
+
+As group trips become more common — and more complex — the limitations of spreadsheet travel planning become clear. And that's where a dedicated **collaborative travel planner** like Collab Planner stands apart.
+
+## The Illusion of Control in Spreadsheets
+
+At first glance, spreadsheets feel organized. You can create tabs for flights, hotels, budgets, and activities. You can build formulas to calculate totals. You can share the file.
+
+But spreadsheets demand manual upkeep. Someone has to update them consistently. Version conflicts happen. Columns get misaligned. Links break.
+
+They require constant maintenance.
+
+A dedicated **online trip planner**, on the other hand, is built with travel in mind. It structures your plans automatically. It connects dates to activities. It keeps updates synced in real time across your entire group.
+
+Less maintenance means less friction.
+
+## Visual Planning vs Data Entry
+
+Spreadsheets are data-focused. Travel is experience-focused.
+
+A **travel planner app** presents your trip as a timeline, not a grid. You see the rhythm of your days. You notice if you've overscheduled. You can adjust activities until the flow feels right.
+
+That intuitive layout changes how you plan.
+
+You're no longer entering data — you're designing an experience.
+
+## Real-Time Collaboration Without Confusion
+
+One of the most frustrating parts of spreadsheet planning is version control.
+
+"Are we using the updated file?"
+"Who edited this?"
+"Why is my column gone?"
+
+Collab Planner eliminates those questions entirely. Everyone works inside the same live environment. Changes are immediate. Visibility is shared across every member of the group.
+
+Collaboration feels seamless instead of technical.
+
+## The Verdict: Built for Travel Wins
+
+Spreadsheets were created for accounting, reporting, and structured data analysis.
+
+Travel planners are built for itineraries, experiences, and shared adventures.
+
+If you're planning a solo weekend, a spreadsheet might be enough. But if you're organizing a group trip with multiple moving parts, a dedicated travel planner offers clarity, collaboration, and confidence that traditional tools simply weren't designed to provide.
+
+**[Try Collab Planner free — no spreadsheet required →](/login?signup=true)**
+    `.trim(),
+  },
+  {
+    slug: 'best-way-to-plan-a-friends-trip',
+    title: "The Best Way to Plan a Friends' Trip: Using an Online Travel Planner",
+    excerpt: "Discover the best way to plan a friends' trip using a collaborative online travel planner. Organize itineraries, budgets, and bookings — without the chaos.",
+    date: '2026-02-20',
+    readTime: '4 min read',
+    category: 'Group Travel',
+    coverEmoji: '👫',
+    tags: ['friends trip', 'group travel', 'travel planner', 'vacation planning'],
+    content: `
+There's something uniquely special about traveling with friends. Shared jokes become inside memories. Simple dinners turn into stories you'll tell for years. But planning that trip? That's often where things break down.
+
+Without structure, friends' trip planning quickly turns into scattered ideas and miscommunication. One person takes control. Others disengage. Decisions stall. Excitement fades.
+
+The best way to plan a friends' trip today is with a **collaborative online travel planner** built specifically for groups — like Collab Planner.
+
+## Why Friends' Trips Get Complicated
+
+Unlike solo travel, group travel multiplies every decision.
+
+Five people mean five opinions. Different budgets. Different priorities. Different expectations for what "fun" looks like.
+
+Some friends want relaxation. Others want adventure. Someone wants luxury dining. Someone else is watching every dollar.
+
+A structured **friends trip planner** creates space for all those perspectives to coexist. When options are visible and organized in one place, compromise becomes easier — and faster.
+
+## Collaboration Changes Everything
+
+The biggest advantage of a shared travel planner is distributed ownership.
+
+Instead of one person acting as the unofficial trip manager, everyone can contribute. Someone researches restaurants. Another finds activities. Another compares accommodations.
+
+Because Collab Planner is built for collaboration, participation feels natural. People are more invested in the trip when they had a hand in building it. And that investment shows up in the experience itself.
+
+## Moving Beyond Spreadsheets and Screenshots
+
+For years, spreadsheets were the go-to solution for group vacation planning. They worked — but they weren't built specifically for travel.
+
+A dedicated **travel planner app** organizes information in ways spreadsheets simply can't. Timelines replace rows. Activities attach to specific days. Budgets update dynamically. Shared expenses are tracked automatically.
+
+Instead of manually formatting cells, you're building a real itinerary. That difference matters more than it sounds.
+
+## Confidence Before You Even Depart
+
+There's a certain calm that comes from knowing everything is organized.
+
+When flights are visible. When check-in times are confirmed. When dinner reservations are locked in. When everyone understands the schedule.
+
+Collab Planner creates that clarity long before you board the plane — and clarity transforms how the trip feels, even before it begins.
+
+## The Real Benefit: Protecting the Friendship
+
+Trips are meant to strengthen friendships, not test them.
+
+Miscommunication about money or plans can create tension that lingers long after the vacation ends. Using a collaborative travel planner minimizes those risks. It removes ambiguity. It keeps expectations aligned. It gives everyone visibility.
+
+That's not just convenient — it's protective.
+
+**[Plan your next friends' trip with Collab Planner — free to start →](/login?signup=true)**
+    `.trim(),
+  },
+  {
     slug: 'how-to-plan-a-group-trip-online',
     title: 'How to Plan a Group Trip Online (Step-by-Step Travel Planner Guide)',
     excerpt: 'Learn how to plan a group trip online using a collaborative travel planner. This complete step-by-step guide shows you how to organize flights, hotels, budgets, and itineraries without the chaos.',
