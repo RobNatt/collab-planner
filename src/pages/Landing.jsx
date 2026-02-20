@@ -231,7 +231,7 @@ function Landing() {
           {/* Mock activity cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
             gap: '16px',
           }}>
             {[
@@ -239,6 +239,8 @@ function Landing() {
               { icon: '🏨', label: 'Shinjuku Hotel', detail: '$840 · Split 6 ways = $140 each', tag: 'Expense', tagColor: colors.success },
               { icon: '🗼', label: 'Tokyo Tower visit', detail: 'Mar 17 · 10:00 AM · All members', tag: 'Activity', tagColor: colors.warning },
               { icon: '🍜', label: 'Ramen tour', detail: 'Mar 18 · Suggested by 4 members', tag: 'Voted', tagColor: colors.purple },
+              { icon: '🚅', label: 'Shinkansen pass', detail: '$220 · Split 6 ways = $37 each', tag: 'Expense', tagColor: colors.success },
+              { icon: '🗃️', label: 'Passport copies', detail: 'Due Feb 28 · Assigned to Taylor', tag: 'Task', tagColor: colors.primary },
             ].map((item, i) => (
               <div key={i} style={{
                 padding: '16px',
@@ -296,7 +298,7 @@ function Landing() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: '24px',
           }}>
             {[
@@ -311,6 +313,11 @@ function Landing() {
                 description: 'Coordinate family vacations without the chaos. Assign tasks, vote on activities, track what everyone owes, and share the itinerary so the whole family stays in sync.',
               },
               {
+                icon: '💼',
+                title: 'Business Trips & Team Offsites',
+                description: 'Plan company retreats, team offsites, and multi-city business trips with your colleagues. Track expenses by person, assign logistics tasks, and keep everyone on the same schedule.',
+              },
+              {
                 icon: '🌍',
                 title: 'Group Tours & Travel Clubs',
                 description: 'Running a group tour or travel club? Manage multiple members, plan day-by-day itineraries, and track shared expenses — all without the email back-and-forth.',
@@ -319,6 +326,11 @@ function Landing() {
                 icon: '🎒',
                 title: 'Backpacking & Adventure Groups',
                 description: 'From packing checklists to hostel bookings, keep your adventure group organized. Real-time updates mean everyone sees the latest plan, wherever they are.',
+              },
+              {
+                icon: '🎓',
+                title: 'School Trips & Group Tours',
+                description: 'Organizing a student trip or educational tour? Manage schedules, assignments, and group expenses in one place — so chaperones and coordinators stay in control.',
               },
             ].map((card, i) => (
               <div
