@@ -17,7 +17,7 @@ For a long time, spreadsheets were the default tool for planning trips. They wer
 
 But they were never designed specifically for travel.
 
-As group trips become more common — and more complex — the limitations of spreadsheet travel planning become clear. And that's where a dedicated **collaborative travel planner** like Collab Planner stands apart.
+As group trips become more common — and more complex — the limitations of spreadsheet travel planning become clear. And that's where a dedicated [collaborative travel planner](/) like Collab Planner stands apart.
 
 ## The Illusion of Control in Spreadsheets
 
@@ -27,7 +27,7 @@ But spreadsheets demand manual upkeep. Someone has to update them consistently. 
 
 They require constant maintenance.
 
-A dedicated **online trip planner**, on the other hand, is built with travel in mind. It structures your plans automatically. It connects dates to activities. It keeps updates synced in real time across your entire group.
+A dedicated [online trip planner](/), on the other hand, is built with travel in mind. It structures your plans automatically. It connects dates to activities. It keeps updates synced in real time across your entire group.
 
 Less maintenance means less friction.
 
@@ -78,7 +78,7 @@ There's something uniquely special about traveling with friends. Shared jokes be
 
 Without structure, friends' trip planning quickly turns into scattered ideas and miscommunication. One person takes control. Others disengage. Decisions stall. Excitement fades.
 
-The best way to plan a friends' trip today is with a **collaborative online travel planner** built specifically for groups — like Collab Planner.
+The best way to plan a friends' trip today is with a [collaborative online travel planner](/) built specifically for groups — like Collab Planner.
 
 ## Why Friends' Trips Get Complicated
 
@@ -102,7 +102,7 @@ Because Collab Planner is built for collaboration, participation feels natural. 
 
 For years, spreadsheets were the go-to solution for group vacation planning. They worked — but they weren't built specifically for travel.
 
-A dedicated **travel planner app** organizes information in ways spreadsheets simply can't. Timelines replace rows. Activities attach to specific days. Budgets update dynamically. Shared expenses are tracked automatically.
+A dedicated [travel planner app](/) organizes information in ways spreadsheets simply can't. Timelines replace rows. Activities attach to specific days. Budgets update dynamically. Shared expenses are tracked automatically.
 
 Instead of manually formatting cells, you're building a real itinerary. That difference matters more than it sounds.
 
@@ -139,7 +139,7 @@ Planning a group trip starts with excitement — a new destination, shared memor
 
 Messages get buried. Someone assumes flights are handled. Two people book different hotels. Budgets aren't aligned. And suddenly, what should be fun becomes frustrating.
 
-That's exactly why more travelers are turning to a **collaborative travel planner** to organize their trips online. Instead of juggling group chats, spreadsheets, and scattered email confirmations, a dedicated online trip planner centralizes everything in one place.
+That's exactly why more travelers are turning to a [collaborative travel planner](/) to organize their trips online. Instead of juggling group chats, spreadsheets, and scattered email confirmations, a dedicated online trip planner centralizes everything in one place.
 
 Here's how to plan a group trip online — the smart way.
 
@@ -155,7 +155,7 @@ When everyone feels heard at the beginning, the planning process becomes smoothe
 
 Once your destination and dates are confirmed, the most important step is creating a shared planning workspace.
 
-A **Buddy Travel Planner** acts as a digital headquarters for your trip. Flights, accommodations, activities, reservations, and notes all live in one organized dashboard. Rather than asking, "Wait, which Airbnb did we pick?" — the information is visible instantly.
+A dedicated [group travel planner](/) acts as a digital headquarters for your trip. Flights, accommodations, activities, reservations, and notes all live in one organized dashboard. Rather than asking, "Wait, which Airbnb did we pick?" — the information is visible instantly.
 
 This is where traditional methods start to fall apart. Group chats scatter information. Spreadsheets require manual updates. Email threads become impossible to track. A dedicated online trip planner eliminates those friction points entirely.
 
@@ -244,7 +244,7 @@ The trip lead is responsible for:
 
 ## Step 5: Build a Shared Itinerary Everyone Can See
 
-This is where most groups still use a Google Doc or group chat — and it falls apart fast. A proper **collaborative travel planner** lets everyone:
+This is where most groups still use a Google Doc or group chat — and it falls apart fast. A proper [collaborative travel planner](/) lets everyone:
 
 - See the day-by-day schedule
 - Add their own activity suggestions

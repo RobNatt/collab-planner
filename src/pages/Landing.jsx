@@ -124,7 +124,7 @@ function Landing() {
             marginBottom: '24px',
             lineHeight: '1.1',
           }}>
-            The Collaborative Travel Planner<br />
+            Collaborative Online Travel Planner<br />
             <span style={{ color: colors.primary }}>Built for Groups</span>
           </h1>
 
@@ -135,8 +135,8 @@ function Landing() {
             margin: '0 auto 40px',
             lineHeight: '1.6',
           }}>
-            Plan trips together with your group — from itinerary planning and task management
-            to expense splitting and real-time collaboration. The all-in-one vacation planner app
+            The travel planner built for group trips. From itinerary planning and task management
+            to shared expense splitting and real-time collaboration — the all-in-one vacation planner app
             for friends, families, and group travel.
           </p>
 
@@ -304,7 +304,7 @@ function Landing() {
               color: colors.text,
               marginBottom: '16px',
             }}>
-              What is Collab Planner?
+              What is Collab Planner? — An Online Travel Planner for Groups
             </h2>
             <p style={{
               color: colors.textSecondary,
@@ -313,10 +313,10 @@ function Landing() {
               margin: '0 auto',
               lineHeight: '1.7',
             }}>
-              Collab Planner is a <strong style={{ color: colors.text }}>group travel planner</strong> that makes
-              coordinating trips simple. Whether you're planning a weekend getaway or a two-week vacation,
-              our <strong style={{ color: colors.text }}>itinerary planner</strong> keeps everyone on the same page —
-              tasks, activities, expenses, and dates, all in one place.
+              Collab Planner is a free <strong style={{ color: colors.text }}>online travel planner</strong> built for groups.
+              Whether you're organizing a weekend road trip or a two-week vacation abroad, our
+              {' '}<strong style={{ color: colors.text }}>group trip planner</strong> keeps everyone on the same page —
+              tasks, activities, shared expenses, and dates, all in one collaborative workspace.
             </p>
           </div>
 
@@ -398,7 +398,7 @@ function Landing() {
             textAlign: 'center',
             marginBottom: '16px',
           }}>
-            Everything Your Group Needs for Trip Planning
+            Everything Your Group Needs in One Travel Planner
           </h2>
           <p style={{
             color: colors.textSecondary,
@@ -407,7 +407,7 @@ function Landing() {
             margin: '0 auto 60px',
             fontSize: '18px',
           }}>
-            From itinerary planning to expense splitting — all the group travel planning tools you need, in one app.
+            From itinerary planning to expense splitting — all the group trip planner tools you need, in one travel planner app.
           </p>
 
           <div style={{
