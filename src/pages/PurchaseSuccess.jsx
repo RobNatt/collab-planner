@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
+import { trackPurchaseComplete } from '../utils/analytics';
 import { useTheme } from '../contexts/ThemeContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
@@ -35,6 +36,7 @@ function PurchaseSuccess() {
           purchasedAt: serverTimestamp(),
         });
 
+        trackPurchaseComplete(user.uid);
         setStatus('success');
       } catch {
         setStatus('success'); // Show success even if write fails — admin can verify in LemonSqueezy

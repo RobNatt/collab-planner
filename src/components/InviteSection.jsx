@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
+import { trackCollaboratorInvited } from '../utils/analytics';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
@@ -98,6 +99,7 @@ function InviteSection({ plan }) {
       await updateDoc(doc(db, 'plans', plan.id), updateData);
 
       setInviteCode(code);
+      trackCollaboratorInvited(plan.id, expiration, maxUses);
       toast.success('Invite code generated!');
     } catch (error) {
       console.error('Error generating invite code:', error);

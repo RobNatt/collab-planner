@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AnalyticsTracker } from './components/AnalyticsTracker';
 
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
@@ -21,6 +22,7 @@ function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={null}>
+        <AnalyticsTracker />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />

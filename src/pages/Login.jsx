@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc, updateDoc, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import emailjs from '@emailjs/browser';
+import { trackSignupComplete } from '../utils/analytics';
 import { auth, db } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -73,6 +74,7 @@ function Login() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         sendEmailVerification(userCredential.user).catch(() => {});
         toast.success('Account created! Check your email to verify.');
+        trackSignupComplete('email');
 
         // Track signup: decrement spots counter and log notification
         updateDoc(doc(db, 'appStats', 'counters'), {

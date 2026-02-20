@@ -30,6 +30,18 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Google Analytics 4 — REPLACE G-XXXXXXX with your Measurement ID -->
+    <!-- Get it: GA4 > Admin > Data Streams > your web stream > Measurement ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXX', {
+        send_page_view: false  // SPA: page_view fired by AnalyticsTracker on each route change
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

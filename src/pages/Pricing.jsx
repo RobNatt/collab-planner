@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, updateDoc, increment, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { trackCheckoutStarted } from '../utils/analytics';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useLicense } from '../hooks/useLicense';
@@ -50,6 +51,7 @@ function Pricing() {
 
     // Redirect to Stripe Payment Link with email prefilled and user ID for tracking
     const fullUrl = `${paymentLink}?prefilled_email=${encodeURIComponent(auth.currentUser.email)}&client_reference_id=${auth.currentUser.uid}`;
+    trackCheckoutStarted();
     window.location.href = fullUrl;
   };
 

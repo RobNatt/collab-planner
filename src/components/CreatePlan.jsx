@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
+import { trackTripCreated } from '../utils/analytics';
 import { useTheme } from '../contexts/ThemeContext';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UpgradeModal } from './UpgradeModal';
@@ -47,6 +48,10 @@ function CreatePlan({ onPlanCreated }) {
       };
 
       await addDoc(collection(db, 'plans'), planData);
+      const durationDays = startDate && endDate
+        ? Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))
+        : 0;
+      trackTripCreated(planName, durationDays);
       toast.success('Plan created successfully!');
 
       setPlanName('');
