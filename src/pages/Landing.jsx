@@ -190,80 +190,104 @@ function Landing() {
           </div>
         </div>
 
-        {/* Travel-specific visual mockup */}
-        <div style={{
-          marginTop: '60px',
-          padding: '32px',
-          backgroundColor: colors.cardBg,
-          borderRadius: '20px',
-          boxShadow: `0 8px 32px ${colors.shadow}`,
-          border: `1px solid ${colors.border}`,
-        }}>
-          {/* Mock plan header */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '24px',
-            flexWrap: 'wrap',
-            gap: '12px',
-          }}>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: colors.text }}>🗺️ Tokyo & Kyoto Trip</div>
-              <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '4px' }}>Mar 15 – Mar 22 · 8 days · 6 members</div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {['Planning', 'Itinerary', 'Expenses', 'Tasks'].map((tab, i) => (
-                <div key={i} style={{
-                  padding: '6px 14px',
-                  borderRadius: '20px',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  backgroundColor: i === 0 ? colors.primary : colors.backgroundTertiary,
-                  color: i === 0 ? 'white' : colors.textSecondary,
-                }}>
-                  {tab}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Mock activity cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '16px',
-          }}>
-            {[
-              { icon: '✈️', label: 'Book flights', detail: 'Due Mar 1 · Assigned to Alex', tag: 'Task', tagColor: colors.primary },
-              { icon: '🏨', label: 'Shinjuku Hotel', detail: '$840 · Split 6 ways = $140 each', tag: 'Expense', tagColor: colors.success },
-              { icon: '🗼', label: 'Tokyo Tower visit', detail: 'Mar 17 · 10:00 AM · All members', tag: 'Activity', tagColor: colors.warning },
-              { icon: '🍜', label: 'Ramen tour', detail: 'Mar 18 · Suggested by 4 members', tag: 'Voted', tagColor: colors.purple },
-              { icon: '🚅', label: 'Shinkansen pass', detail: '$220 · Split 6 ways = $37 each', tag: 'Expense', tagColor: colors.success },
-              { icon: '🗃️', label: 'Passport copies', detail: 'Due Feb 28 · Assigned to Taylor', tag: 'Task', tagColor: colors.primary },
-            ].map((item, i) => (
-              <div key={i} style={{
-                padding: '16px',
-                backgroundColor: colors.backgroundTertiary,
-                borderRadius: '12px',
-                textAlign: 'left',
+        {/* Trip mockups */}
+        <div style={{ marginTop: '60px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {[
+            {
+              title: '🗺️ Tokyo & Kyoto Trip',
+              meta: 'Mar 15 – Mar 22 · 8 days · 6 members',
+              cards: [
+                { icon: '✈️', label: 'Book flights', detail: 'Due Mar 1 · Assigned to Alex', tag: 'Task', tagColor: colors.primary },
+                { icon: '🏨', label: 'Shinjuku Hotel', detail: '$840 · Split 6 ways = $140 each', tag: 'Expense', tagColor: colors.success },
+                { icon: '🗼', label: 'Tokyo Tower visit', detail: 'Mar 17 · 10:00 AM · All members', tag: 'Activity', tagColor: colors.warning },
+                { icon: '🍜', label: 'Ramen tour', detail: 'Mar 18 · Suggested by 4 members', tag: 'Voted', tagColor: colors.purple },
+              ],
+            },
+            {
+              title: '🌊 Amalfi Coast & Rome',
+              meta: 'Jun 5 – Jun 14 · 10 days · 4 members',
+              cards: [
+                { icon: '🚗', label: 'Rent a convertible', detail: 'Due May 20 · Assigned to Jamie', tag: 'Task', tagColor: colors.primary },
+                { icon: '🏛️', label: 'Colosseum tour', detail: 'Jun 6 · 9:00 AM · Skip the line tickets', tag: 'Activity', tagColor: colors.warning },
+                { icon: '🍕', label: 'Dinner at La Pergola', detail: '$320 · Split 4 ways = $80 each', tag: 'Expense', tagColor: colors.success },
+                { icon: '⛵', label: 'Boat tour to Capri', detail: 'Jun 10 · Suggested by 3 members', tag: 'Voted', tagColor: colors.purple },
+              ],
+            },
+            {
+              title: '💼 NYC Team Offsite',
+              meta: 'Apr 22 – Apr 24 · 3 days · 8 members',
+              cards: [
+                { icon: '🏢', label: 'Book conference room', detail: 'Due Apr 10 · Assigned to Morgan', tag: 'Task', tagColor: colors.primary },
+                { icon: '🏨', label: 'Midtown hotel block', detail: '$3,200 · Split 8 ways = $400 each', tag: 'Expense', tagColor: colors.success },
+                { icon: '🍽️', label: 'Team dinner — Apr 22', detail: '7:00 PM · Reservation for 8', tag: 'Activity', tagColor: colors.warning },
+                { icon: '🗽', label: 'Evening rooftop event', detail: 'Apr 23 · Voted by 6 members', tag: 'Voted', tagColor: colors.purple },
+              ],
+            },
+          ].map((trip, ti) => (
+            <div key={ti} style={{
+              padding: '28px',
+              backgroundColor: colors.cardBg,
+              borderRadius: '20px',
+              boxShadow: `0 8px 32px ${colors.shadow}`,
+              border: `1px solid ${colors.border}`,
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '20px',
+                flexWrap: 'wrap',
+                gap: '12px',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '24px' }}>{item.icon}</span>
-                  <span style={{
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                    backgroundColor: `${item.tagColor}20`,
-                    color: item.tagColor,
-                  }}>{item.tag}</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '700', color: colors.text }}>{trip.title}</div>
+                  <div style={{ fontSize: '13px', color: colors.textSecondary, marginTop: '4px' }}>{trip.meta}</div>
                 </div>
-                <div style={{ color: colors.text, fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>{item.label}</div>
-                <div style={{ color: colors.textSecondary, fontSize: '12px' }}>{item.detail}</div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {['Planning', 'Itinerary', 'Expenses', 'Tasks'].map((tab, i) => (
+                    <div key={i} style={{
+                      padding: '5px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      backgroundColor: i === 0 ? colors.primary : colors.backgroundTertiary,
+                      color: i === 0 ? 'white' : colors.textSecondary,
+                    }}>
+                      {tab}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '12px',
+              }}>
+                {trip.cards.map((item, i) => (
+                  <div key={i} style={{
+                    padding: '14px',
+                    backgroundColor: colors.backgroundTertiary,
+                    borderRadius: '10px',
+                    textAlign: 'left',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '22px' }}>{item.icon}</span>
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        padding: '2px 7px',
+                        borderRadius: '8px',
+                        backgroundColor: `${item.tagColor}20`,
+                        color: item.tagColor,
+                      }}>{item.tag}</span>
+                    </div>
+                    <div style={{ color: colors.text, fontWeight: '600', fontSize: '13px', marginBottom: '3px' }}>{item.label}</div>
+                    <div style={{ color: colors.textSecondary, fontSize: '11px' }}>{item.detail}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
