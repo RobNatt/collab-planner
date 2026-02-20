@@ -9,6 +9,14 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
 
+const subscribeToNewsletter = (email) => {
+  const url = import.meta.env.VITE_MAILCHIMP_URL;
+  if (!url) return;
+  // Mailchimp supports no-cors form submission from the browser
+  const postUrl = url.replace('/post?', '/post-json?') + `&EMAIL=${encodeURIComponent(email)}&c=_`;
+  fetch(postUrl, { method: 'POST', mode: 'no-cors' }).catch(() => {});
+};
+
 const sendSignupNotification = (email) => {
   const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
@@ -77,6 +85,7 @@ function Login() {
           signedUpAt: serverTimestamp(),
         }).catch(() => {});
         sendSignupNotification(userCredential.user.email);
+        subscribeToNewsletter(userCredential.user.email);
 
         // Check for invite or redirect, otherwise go to welcome
         const redirectPath = searchParams.get('redirect');

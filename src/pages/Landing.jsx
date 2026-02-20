@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
+import blogPosts from '../data/blogPosts';
 
 function Landing() {
   const navigate = useNavigate();
@@ -29,6 +30,23 @@ function Landing() {
           Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <button
+            onClick={() => navigate('/blog')}
+            style={{
+              padding: '10px 16px',
+              backgroundColor: 'transparent',
+              color: colors.textSecondary,
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '500',
+              transition: 'color 0.2s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = colors.text; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = colors.textSecondary; }}
+          >
+            Blog
+          </button>
           <ThemeToggle />
           <button
             onClick={() => navigate('/login')}
@@ -665,6 +683,85 @@ function Landing() {
         </div>
       </section>
 
+      {/* Blog Preview Section */}
+      {blogPosts.length > 0 && (
+        <section style={{ padding: '100px 40px', backgroundColor: colors.background }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>
+                  Travel Planning Tips
+                </h2>
+                <p style={{ color: colors.textSecondary, fontSize: '16px' }}>
+                  Guides to help your group plan better trips.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/blog')}
+                style={{
+                  padding: '10px 22px',
+                  backgroundColor: 'transparent',
+                  color: colors.primary,
+                  border: `1px solid ${colors.primary}`,
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${colors.primary}10`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                View all posts →
+              </button>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '24px',
+            }}>
+              {blogPosts.slice(0, 3).map((post) => (
+                <article
+                  key={post.slug}
+                  onClick={() => navigate(`/blog/${post.slug}`)}
+                  style={{
+                    padding: '24px',
+                    backgroundColor: colors.cardBg,
+                    borderRadius: '14px',
+                    border: `1px solid ${colors.border}`,
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = `0 8px 24px ${colors.shadow}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ fontSize: '36px', marginBottom: '12px' }}>{post.coverEmoji}</div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '10px', backgroundColor: `${colors.primary}18`, color: colors.primary }}>
+                      {post.category}
+                    </span>
+                    <span style={{ fontSize: '12px', color: colors.textMuted }}>{post.readTime}</span>
+                  </div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: colors.text, marginBottom: '8px', lineHeight: '1.4' }}>{post.title}</h3>
+                  <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: '1.6', marginBottom: '12px' }}>
+                    {post.excerpt.slice(0, 100)}...
+                  </p>
+                  <span style={{ fontSize: '13px', color: colors.primary, fontWeight: '600' }}>Read more →</span>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CTA Section */}
       <section style={{
         padding: '100px 40px',
@@ -727,10 +824,10 @@ function Landing() {
           marginBottom: '20px',
           flexWrap: 'wrap',
         }}>
-          {['About', 'Features', 'Pricing', 'Contact', 'Privacy', 'Terms'].map((link) => (
+          {['About', 'Features', 'Pricing', 'Blog', 'Privacy', 'Terms'].map((link) => (
             <a
               key={link}
-              href={link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : link === 'Terms' ? '/terms' : link === 'Privacy' ? '/privacy' : '#'}
+              href={link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : link === 'Blog' ? '/blog' : link === 'Terms' ? '/terms' : link === 'Privacy' ? '/privacy' : '#'}
               style={{
                 color: colors.textSecondary,
                 textDecoration: 'none',
