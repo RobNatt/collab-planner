@@ -1,40 +1,44 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Welcome from './pages/Welcome';
-import Dashboard from './pages/Dashboard';
-import PlanDetails from './pages/PlanDetails';
-import JoinPlan from './pages/JoinPlan';
-import Profile from './pages/Profile';
-import Pricing from './pages/Pricing';
-import Feedback from './pages/Feedback';
-import PurchaseSuccess from './pages/PurchaseSuccess';
-import Terms from './pages/Terms';
-import Privacy from './pages/Privacy';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import NotFound from './pages/NotFound';
+
+const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const Welcome = lazy(() => import('./pages/Welcome'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const PlanDetails = lazy(() => import('./pages/PlanDetails'));
+const JoinPlan = lazy(() => import('./pages/JoinPlan'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const Feedback = lazy(() => import('./pages/Feedback'));
+const PurchaseSuccess = lazy(() => import('./pages/PurchaseSuccess'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/welcome" element={<Welcome />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/feedback" element={<Feedback />} />
-        <Route path="/purchase-success" element={<PurchaseSuccess />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/plan/:planId" element={<PlanDetails />} />
-        <Route path="/join/:inviteCode" element={<JoinPlan />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/welcome" element={<Welcome />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/feedback" element={<Feedback />} />
+          <Route path="/purchase-success" element={<PurchaseSuccess />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/plan/:planId" element={<PlanDetails />} />
+          <Route path="/join/:inviteCode" element={<JoinPlan />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

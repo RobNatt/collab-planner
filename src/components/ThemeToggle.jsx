@@ -20,6 +20,7 @@ export function ThemeToggle({ style = {} }) {
         transition: 'all 0.2s ease',
         ...style,
       }}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
@@ -32,6 +33,7 @@ export function ThemeToggle({ style = {} }) {
     >
       {isDark ? (
         <svg
+          aria-hidden="true"
           width="22"
           height="22"
           viewBox="0 0 24 24"
@@ -53,6 +55,7 @@ export function ThemeToggle({ style = {} }) {
         </svg>
       ) : (
         <svg
+          aria-hidden="true"
           width="20"
           height="20"
           viewBox="0 0 24 24"
