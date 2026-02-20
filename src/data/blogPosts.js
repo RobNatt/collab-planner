@@ -61,7 +61,7 @@ Travel planners are built for itineraries, experiences, and shared adventures.
 
 If you're planning a solo weekend, a spreadsheet might be enough. But if you're organizing a group trip with multiple moving parts, a dedicated travel planner offers clarity, collaboration, and confidence that traditional tools simply weren't designed to provide.
 
-**[Try Collab Planner free — no spreadsheet required →](/login?signup=true)**
+[Try Collab Planner free — no spreadsheet required →](/login?signup=true)
     `.trim(),
   },
   {
@@ -122,7 +122,7 @@ Miscommunication about money or plans can create tension that lingers long after
 
 That's not just convenient — it's protective.
 
-**[Plan your next friends' trip with Collab Planner — free to start →](/login?signup=true)**
+[Plan your next friends' trip with Collab Planner — free to start →](/login?signup=true)
     `.trim(),
   },
   {
@@ -191,7 +191,7 @@ Digital collaboration tools have transformed how we work — and they're transfo
 
 An online group travel planner isn't just a convenience. It's a structure that protects your time, your friendships, and your experience. When your logistics are handled, you're free to focus on what matters: enjoying the trip.
 
-**[Start planning your group trip for free with Collab Planner →](/login?signup=true)**
+[Start planning your group trip for free with Collab Planner →](/login?signup=true)
     `.trim(),
   },
   {
@@ -280,7 +280,7 @@ Assign tasks to specific people with due dates. When everyone knows what they ow
 
 All seven of these steps are built into Collab Planner. Instead of bouncing between a calendar, spreadsheet, group chat, and notes app — your group gets one shared workspace that handles trip planning from "are we doing this?" to "that was the best trip ever."
 
-**[Start planning your next group trip for free →](/login?signup=true)**
+[Start planning your next group trip for free →](/login?signup=true)
     `.trim(),
   },
 ];
