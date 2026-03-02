@@ -3,8 +3,9 @@
 // ========================================
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { httpsCallable } from 'firebase/functions';
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
-import { db, auth } from '../config/firebase';
+import { db, auth, functions } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Skeleton, SkeletonText } from '../components/Skeleton';
@@ -102,15 +103,37 @@ function JoinPlan() {
     setJoining(true);
 
     try {
+      // Charge plan owner $1 for collaborator join (individual/LTD plans; business handles overages differently)
+      const planOwnerId = plan.admin || plan.createdBy;
+      let chargeMsg = null;
+      if (planOwnerId && planOwnerId !== auth.currentUser.uid) {
+        try {
+          const chargeCollaboratorJoin = httpsCallable(functions, 'chargeCollaboratorJoin');
+          const result = await chargeCollaboratorJoin({
+            planId: plan.id,
+            planOwnerId,
+            collaboratorName: auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'A collaborator',
+            planName: plan.name,
+          });
+          if (result?.data?.charged) {
+            chargeMsg = `You've joined! $1 was added for this collaborator.`;
+          }
+        } catch (chargeErr) {
+          console.error('Collaborator charge error:', chargeErr);
+          if (chargeErr.message?.includes('No payment method') || chargeErr.message?.includes('payment method')) {
+            chargeMsg = `You've joined! (Owner needs to add a payment method for collaborator charges.)`;
+          }
+        }
+      }
+
       await updateDoc(doc(db, 'plans', plan.id), {
         members: arrayUnion(auth.currentUser.uid),
         inviteUseCount: increment(1),
       });
 
-      // Log activity
       logMemberJoined(plan.id);
 
-      toast.success(`Successfully joined "${plan.name}"!`);
+      toast.success(chargeMsg || `Successfully joined "${plan.name}"!`);
       navigate(`/plan/${plan.id}`);
     } catch (error) {
       console.error('Error joining plan:', error);

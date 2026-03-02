@@ -84,7 +84,7 @@ export function UpgradeModal({ onClose }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
-            onClick={() => { onClose(); navigate('/pricing'); }}
+            onClick={() => { onClose(); navigate('/ltd'); }}
             style={{
               width: '100%',
               padding: '14px',

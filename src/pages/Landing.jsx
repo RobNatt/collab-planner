@@ -1,11 +1,21 @@
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import blogPosts from '../data/blogPosts';
+import { INDIVIDUAL_PLANS, BUSINESS_PLANS } from '../data/pricingPlans';
 
 function Landing() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { colors } = useTheme();
+  const [planTab, setPlanTab] = useState('individual'); // 'individual' | 'business'
+
+  useEffect(() => {
+    if (location.hash === '#pricing') {
+      document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [location.hash]);
 
   return (
     <div style={{
@@ -512,142 +522,218 @@ function Landing() {
         padding: '100px 40px',
         backgroundColor: colors.backgroundSecondary,
       }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontSize: 'clamp(28px, 4vw, 42px)',
             fontWeight: '700',
             color: colors.text,
             marginBottom: '16px',
           }}>
-            Simple, One-Time Pricing
+            Choose Your Plan
           </h2>
           <p style={{
             color: colors.textSecondary,
             fontSize: '18px',
-            marginBottom: '16px',
+            marginBottom: '32px',
           }}>
-            Start free — upgrade once for lifetime access to all trip planning features.
+            Individual or Business — pick what fits your trip planning needs.
           </p>
+
+          {/* Toggle: Individual vs Business */}
           <div style={{
-            display: 'inline-block',
-            padding: '8px 20px',
-            backgroundColor: `${colors.danger}15`,
-            border: `1px solid ${colors.danger}40`,
-            borderRadius: '20px',
-            color: colors.danger,
-            fontWeight: '700',
-            fontSize: '14px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '4px',
+            backgroundColor: colors.backgroundTertiary,
+            borderRadius: '12px',
             marginBottom: '40px',
+            border: `1px solid ${colors.border}`,
           }}>
-            Limited: Only 127 of 500 lifetime spots available
+            <button
+              onClick={() => setPlanTab('individual')}
+              style={{
+                padding: '10px 24px',
+                fontSize: '15px',
+                fontWeight: '600',
+                backgroundColor: planTab === 'individual' ? colors.primary : 'transparent',
+                color: planTab === 'individual' ? 'white' : colors.textSecondary,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Individual
+            </button>
+            <button
+              onClick={() => setPlanTab('business')}
+              style={{
+                padding: '10px 24px',
+                fontSize: '15px',
+                fontWeight: '600',
+                backgroundColor: planTab === 'business' ? colors.primary : 'transparent',
+                color: planTab === 'business' ? 'white' : colors.textSecondary,
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Business
+            </button>
           </div>
 
+          {/* Pricing Table */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px',
-            textAlign: 'left',
+            overflowX: 'auto',
+            borderRadius: '16px',
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.cardBg,
+            boxShadow: `0 4px 24px ${colors.shadow}`,
           }}>
-            {/* Free */}
-            <div style={{
-              padding: '32px',
-              backgroundColor: colors.cardBg,
-              borderRadius: '16px',
-              border: `1px solid ${colors.border}`,
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              minWidth: '700px',
             }}>
-              <h3 style={{ color: colors.textSecondary, fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Free</h3>
-              <div style={{ fontSize: '36px', fontWeight: '800', color: colors.text, marginBottom: '4px' }}>$0</div>
-              <p style={{ color: colors.textSecondary, fontSize: '14px', marginBottom: '20px' }}>Forever free</p>
-              <button
-                onClick={() => navigate('/login?signup=true')}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  backgroundColor: 'transparent',
-                  color: colors.text,
-                  border: `2px solid ${colors.border}`,
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  marginBottom: '20px',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.backgroundTertiary}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                Get Started
-              </button>
-              {['1 trip plan', 'Up to 3 members', 'Max 4-day trips', 'Basic task management'].map((f, i) => (
-                <div key={i} style={{ padding: '6px 0', color: colors.textSecondary, fontSize: '14px', display: 'flex', gap: '8px' }}>
-                  <span style={{ color: colors.success }}>✓</span> {f}
-                </div>
-              ))}
-            </div>
-
-            {/* LTD */}
-            <div style={{
-              padding: '32px',
-              backgroundColor: colors.cardBg,
-              borderRadius: '16px',
-              border: `2px solid ${colors.primary}`,
-              position: 'relative',
-              boxShadow: `0 4px 24px ${colors.primary}22`,
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '-12px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                padding: '4px 14px',
-                backgroundColor: colors.primary,
-                color: 'white',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: '700',
-                textTransform: 'uppercase',
-              }}>
-                Best Value
-              </div>
-              <h3 style={{ color: colors.primary, fontSize: '14px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Lifetime Deal</h3>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
-                <span style={{ fontSize: '36px', fontWeight: '800', color: colors.text }}>$49</span>
-                <span style={{ color: colors.textSecondary, textDecoration: 'line-through' }}>$199</span>
-              </div>
-              <p style={{ color: colors.textSecondary, fontSize: '14px', marginBottom: '20px' }}>One-time, lifetime access</p>
-              <button
-                onClick={() => navigate('/pricing')}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '15px',
-                  fontWeight: '700',
-                  backgroundColor: colors.primary,
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  marginBottom: '20px',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = `0 4px 16px ${colors.primary}44`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                Get Lifetime Access
-              </button>
-              {['Unlimited trips & members', 'Any trip duration', 'Advanced expenses + CSV export', 'Calendar & iCal export', 'Analytics dashboard', 'All future updates'].map((f, i) => (
-                <div key={i} style={{ padding: '6px 0', color: colors.text, fontSize: '14px', display: 'flex', gap: '8px', fontWeight: i < 2 ? '600' : '400' }}>
-                  <span style={{ color: colors.primary }}>✓</span> {f}
-                </div>
-              ))}
-            </div>
+              <thead>
+                <tr style={{ backgroundColor: colors.backgroundTertiary, borderBottom: `2px solid ${colors.border}` }}>
+                  <th style={{
+                    padding: '20px 16px',
+                    textAlign: 'left',
+                    color: colors.textSecondary,
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    width: '180px',
+                  }}>
+                    Features
+                  </th>
+                  {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
+                    <th key={p.id} style={{
+                      padding: '20px 16px',
+                      textAlign: 'center',
+                      color: colors.text,
+                      fontWeight: '700',
+                      fontSize: '16px',
+                      minWidth: '160px',
+                    }}>
+                      <div>{p.name}</div>
+                      <div style={{ fontSize: '28px', color: colors.primary, marginTop: '4px' }}>{p.price}</div>
+                      <div style={{ fontSize: '13px', color: colors.textSecondary, fontWeight: '500' }}>{p.priceNote}</div>
+                      {p.savings && (
+                        <div style={{
+                          display: 'inline-block',
+                          marginTop: '8px',
+                          padding: '4px 10px',
+                          backgroundColor: `${colors.success}20`,
+                          color: colors.success,
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                        }}>
+                          {p.savings}
+                        </div>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                  <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Plans</td>
+                  {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
+                    <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
+                      {planTab === 'individual' && p.id === 'pay_per_trip' ? 'Unlimited' : 'Unlimited'}
+                    </td>
+                  ))}
+                </tr>
+                <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                  <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Collaborator pricing</td>
+                  {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
+                    <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
+                      {planTab === 'individual'
+                        ? (p.id === 'pay_per_trip' ? '$1 when they join' : '$1 when they join a trip')
+                        : 'First 10 free, then $2/mo each'}
+                    </td>
+                  ))}
+                </tr>
+                <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                  <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Trip duration</td>
+                  {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
+                    <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
+                      Unlimited
+                    </td>
+                  ))}
+                </tr>
+                <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                  <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Roster / saved profiles</td>
+                  {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
+                    <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
+                      {planTab === 'business' ? (
+                        <span style={{ color: colors.success }}>✓</span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                  ))}
+                </tr>
+                <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                  <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Billing</td>
+                  {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
+                    <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
+                      {p.id === 'pay_per_trip' ? 'Per trip + per collaborator' : p.id.includes('annual') ? 'Annual' : 'Monthly'}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td style={{ padding: '20px 16px', color: colors.textSecondary, fontSize: '14px', verticalAlign: 'middle' }} />
+                  {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
+                    <td key={p.id} style={{ padding: '20px 16px', textAlign: 'center' }}>
+                      <button
+                        onClick={() => {
+                          if (p.id === 'pay_per_trip') {
+                            navigate('/login?signup=true');
+                          } else {
+                            const link = import.meta.env[p.stripeEnvKey];
+                            if (link) window.location.href = link;
+                            else navigate('/login?signup=true');
+                          }
+                        }}
+                        style={{
+                          padding: '12px 24px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          backgroundColor: colors.primary,
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          width: '100%',
+                          maxWidth: '180px',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = `0 4px 16px ${colors.primary}44`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        {p.cta}
+                      </button>
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
+
+          <p style={{ marginTop: '24px', color: colors.textSecondary, fontSize: '14px' }}>
+            Found our secret deal? <a href="/ltd" onClick={(e) => { e.preventDefault(); navigate('/ltd'); }} style={{ color: colors.primary, fontWeight: '600', textDecoration: 'none' }}>Lifetime Deal — $49</a>
+          </p>
         </div>
       </section>
 

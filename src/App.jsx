@@ -10,6 +10,7 @@ const PlanDetails = lazy(() => import('./pages/PlanDetails'));
 const JoinPlan = lazy(() => import('./pages/JoinPlan'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Pricing = lazy(() => import('./pages/Pricing'));
+const LTD = lazy(() => import('./pages/LTD'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const PurchaseSuccess = lazy(() => import('./pages/PurchaseSuccess'));
 const Terms = lazy(() => import('./pages/Terms'));
@@ -30,6 +31,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/ltd" element={<LTD />} />
           <Route path="/feedback" element={<Feedback />} />
           <Route path="/purchase-success" element={<PurchaseSuccess />} />
           <Route path="/terms" element={<Terms />} />

@@ -3,9 +3,10 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { trackTripCreated } from '../utils/analytics';
 import { useTheme } from '../contexts/ThemeContext';
-import { LoadingSpinner } from './LoadingSpinner';
 import { UpgradeModal } from './UpgradeModal';
+import { ConfirmTripModal } from './ConfirmTripModal';
 import { useLicense } from '../hooks/useLicense';
+import { PLAN_TYPES } from '../data/pricingPlans';
 import toast from 'react-hot-toast';
 
 function CreatePlan({ onPlanCreated }) {
@@ -15,14 +16,15 @@ function CreatePlan({ onPlanCreated }) {
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showConfirmTrip, setShowConfirmTrip] = useState(false);
   const { colors } = useTheme();
-  const { isLTD } = useLicense(auth.currentUser?.uid);
+  const { hasUnlimitedAccess, planType } = useLicense(auth.currentUser?.uid);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check trip duration gate for free users
-    if (startDate && endDate && !isLTD) {
+    // Check trip duration gate for free users (4-day max unless paid plan)
+    if (startDate && endDate && !hasUnlimitedAccess) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
@@ -30,6 +32,12 @@ function CreatePlan({ onPlanCreated }) {
         setShowUpgrade(true);
         return;
       }
+    }
+
+    // Pay-per-trip: show confirmation modal before charge
+    if (planType === PLAN_TYPES.PAY_PER_TRIP) {
+      setShowConfirmTrip(true);
+      return;
     }
 
     setLoading(true);
@@ -66,6 +74,14 @@ function CreatePlan({ onPlanCreated }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConfirmTripSuccess = () => {
+    setPlanName('');
+    setDescription('');
+    setStartDate('');
+    setEndDate('');
+    if (onPlanCreated) onPlanCreated();
   };
 
   const inputStyle = {
@@ -231,6 +247,13 @@ function CreatePlan({ onPlanCreated }) {
         </button>
       </form>
       {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+      {showConfirmTrip && (
+        <ConfirmTripModal
+          tripData={{ planName, description, startDate, endDate }}
+          onClose={() => setShowConfirmTrip(false)}
+          onSuccess={handleConfirmTripSuccess}
+        />
+      )}
     </div>
   );
 }

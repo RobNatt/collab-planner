@@ -20,7 +20,7 @@ function Dashboard() {
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const setupDismissed = useRef(false);
   const { colors } = useTheme();
-  const { isLTD } = useLicense(auth.currentUser?.uid);
+  const { isLTD, hasUnlimitedAccess } = useLicense(auth.currentUser?.uid);
 
   const handleLogout = async () => {
     try {
@@ -164,7 +164,7 @@ function Dashboard() {
               </button>
             </div>
           )}
-          {!isLTD && (
+          {!hasUnlimitedAccess && (
             <div style={{
               padding: '12px 16px',
               backgroundColor: `${colors.primary}10`,
@@ -178,10 +178,10 @@ function Dashboard() {
               gap: '8px',
             }}>
               <span style={{ color: colors.text, fontSize: '14px' }}>
-                ★ Unlock unlimited plans, members, and trip duration with Lifetime Access.
+                ★ Unlock unlimited plans, members, and trip duration. Upgrade to a paid plan.
               </span>
               <button
-                onClick={() => navigate('/pricing')}
+                onClick={() => navigate('/#pricing')}
                 style={{
                   padding: '6px 16px',
                   fontSize: '13px',
@@ -196,7 +196,7 @@ function Dashboard() {
                 onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
                 onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
               >
-                Get Lifetime Access — $49
+                View plans
               </button>
             </div>
           )}
