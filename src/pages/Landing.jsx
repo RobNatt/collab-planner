@@ -731,9 +731,6 @@ function Landing() {
             </table>
           </div>
 
-          <p style={{ marginTop: '24px', color: colors.textSecondary, fontSize: '14px' }}>
-            Found our secret deal? <a href="/ltd" onClick={(e) => { e.preventDefault(); navigate('/ltd'); }} style={{ color: colors.primary, fontWeight: '600', textDecoration: 'none' }}>Lifetime Deal — $49</a>
-          </p>
         </div>
       </section>
 
