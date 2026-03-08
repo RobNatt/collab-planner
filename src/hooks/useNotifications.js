@@ -5,7 +5,7 @@ export function useNotifications() {
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   );
   const [enabled, setEnabled] = useState(() => {
-    return localStorage.getItem('collab-planner-notifications') === 'true';
+    return localStorage.getItem('travel-gang-notifications') === 'true';
   });
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export function useNotifications() {
       setPermission(result);
       if (result === 'granted') {
         setEnabled(true);
-        localStorage.setItem('collab-planner-notifications', 'true');
+        localStorage.setItem('travel-gang-notifications', 'true');
       }
       return result;
     } catch {
@@ -36,7 +36,7 @@ export function useNotifications() {
     } else {
       const newState = !enabled;
       setEnabled(newState);
-      localStorage.setItem('collab-planner-notifications', String(newState));
+      localStorage.setItem('travel-gang-notifications', String(newState));
     }
   }, [enabled, permission, requestPermission]);
 

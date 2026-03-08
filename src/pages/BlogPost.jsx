@@ -107,7 +107,7 @@ function BlogPost() {
           onClick={() => navigate('/')}
           style={{ fontSize: '22px', fontWeight: 'bold', color: colors.primary, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          Collab Planner
+          Travel Gang
         </button>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <button
@@ -241,7 +241,7 @@ function BlogPost() {
             Ready to plan your group trip?
           </h3>
           <p style={{ color: colors.textSecondary, marginBottom: '20px', fontSize: '15px' }}>
-            Collab Planner gives your group one shared space for itineraries, tasks, and expenses — free to start.
+            Travel Gang gives your group one shared space for itineraries, tasks, and expenses — free to start.
           </p>
           <button
             onClick={() => navigate('/login?signup=true')}
@@ -315,10 +315,10 @@ function BlogPost() {
           onClick={() => navigate('/')}
           style={{ background: 'none', border: 'none', color: colors.primary, fontWeight: '700', fontSize: '18px', cursor: 'pointer', marginBottom: '12px' }}
         >
-          Collab Planner
+          Travel Gang
         </button>
         <p style={{ color: colors.textMuted, fontSize: '14px' }}>
-          © 2026 Collab Planner · Group Travel Planner App
+          © 2026 Travel Gang · Group Travel Planner App
         </p>
       </footer>
     </div>

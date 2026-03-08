@@ -49,7 +49,7 @@ function LTD() {
             cursor: 'pointer',
           }}
         >
-          Collab Planner
+          Travel Gang
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <ThemeToggle />

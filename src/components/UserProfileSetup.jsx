@@ -99,7 +99,7 @@ function UserProfileSetup({ onComplete }) {
             {getInitials(formData.displayName)}
           </div>
           <h2 style={{ marginTop: 0, marginBottom: '8px', color: colors.text }}>
-            Welcome to Collab Planner!
+            Welcome to Travel Gang!
           </h2>
           <p style={{ color: colors.textSecondary, margin: 0 }}>
             Let's set up your profile so your trip partners can find you.

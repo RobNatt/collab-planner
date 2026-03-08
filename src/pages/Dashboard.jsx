@@ -261,6 +261,34 @@ function Dashboard() {
                 {profile?.displayName ? profile.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?'}
               </button>
               <button
+                onClick={() => navigate('/affiliate-dashboard')}
+                title="Affiliate Dashboard"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  backgroundColor: colors.backgroundTertiary,
+                  color: colors.textSecondary,
+                  border: `1px solid ${colors.border}`,
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.backgroundSecondary;
+                  e.currentTarget.style.color = colors.primary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.backgroundTertiary;
+                  e.currentTarget.style.color = colors.textSecondary;
+                }}
+              >
+                🤝
+              </button>
+              <button
                 onClick={() => navigate('/feedback')}
                 title="Feedback"
                 style={{

@@ -17,6 +17,8 @@ const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
+const Affiliates = lazy(() => import('./pages/Affiliates'));
+const AffiliateDashboard = lazy(() => import('./pages/AffiliateDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
@@ -38,6 +40,8 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/affiliates" element={<Affiliates />} />
+          <Route path="/affiliate-dashboard" element={<AffiliateDashboard />} />
           <Route path="/plan/:planId" element={<PlanDetails />} />
           <Route path="/join/:inviteCode" element={<JoinPlan />} />
           <Route path="*" element={<NotFound />} />

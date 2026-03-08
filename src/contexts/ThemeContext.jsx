@@ -69,12 +69,12 @@ export const themes = {
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('collab-planner-theme');
+    const saved = localStorage.getItem('travel-gang-theme');
     return saved || 'light';
   });
 
   useEffect(() => {
-    localStorage.setItem('collab-planner-theme', theme);
+    localStorage.setItem('travel-gang-theme', theme);
     document.body.style.backgroundColor = themes[theme].background;
     document.body.style.color = themes[theme].text;
   }, [theme]);

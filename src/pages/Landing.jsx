@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import blogPosts from '../data/blogPosts';
@@ -37,7 +38,7 @@ function Landing() {
           fontWeight: 'bold',
           color: colors.primary,
         }}>
-          Collab Planner
+          Travel Gang
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <button
@@ -314,7 +315,7 @@ function Landing() {
               color: colors.text,
               marginBottom: '16px',
             }}>
-              What is Collab Planner? — An Online Travel Planner for Groups
+              What is Travel Gang? — An Online Travel Planner for Groups
             </h2>
             <p style={{
               color: colors.textSecondary,
@@ -323,7 +324,7 @@ function Landing() {
               margin: '0 auto',
               lineHeight: '1.7',
             }}>
-              Collab Planner is a free <strong style={{ color: colors.text }}>online travel planner</strong> built for groups.
+              Travel Gang is a free <strong style={{ color: colors.text }}>online travel planner</strong> built for groups.
               Whether you're organizing a weekend road trip or a two-week vacation abroad, our
               {' '}<strong style={{ color: colors.text }}>group trip planner</strong> keeps everyone on the same page —
               tasks, activities, shared expenses, and dates, all in one collaborative workspace.
@@ -339,7 +340,7 @@ function Landing() {
               {
                 icon: '👫',
                 title: 'Friends Planning a Trip',
-                description: 'Stop juggling Google Docs, group chats, and spreadsheets. Collab Planner puts your entire group trip — dates, destinations, tasks, and money — in one shared space everyone can edit.',
+                description: 'Stop juggling Google Docs, group chats, and spreadsheets. Travel Gang puts your entire group trip — dates, destinations, tasks, and money — in one shared space everyone can edit.',
               },
               {
                 icon: '👨‍👩‍👧‍👦',
@@ -693,11 +694,25 @@ function Landing() {
                       <button
                         onClick={() => {
                           if (p.id === 'pay_per_trip') {
-                            navigate('/login?signup=true');
+                            const payLink = import.meta.env.VITE_STRIPE_PAY_PER_TRIP_LINK;
+                            if (payLink && auth.currentUser) {
+                              const url = `${payLink}?client_reference_id=${auth.currentUser.uid}&prefilled_email=${encodeURIComponent(auth.currentUser.email)}`;
+                              window.location.href = url;
+                            } else {
+                              navigate('/login?signup=true');
+                            }
                           } else {
                             const link = import.meta.env[p.stripeEnvKey];
-                            if (link) window.location.href = link;
-                            else navigate('/login?signup=true');
+                            if (link) {
+                              if (auth.currentUser) {
+                                const url = `${link}?client_reference_id=${auth.currentUser.uid}&prefilled_email=${encodeURIComponent(auth.currentUser.email)}`;
+                                window.location.href = url;
+                              } else {
+                                navigate('/login?redirect=/');
+                              }
+                            } else {
+                              navigate('/login?signup=true');
+                            }
                           }
                         }}
                         style={{
@@ -753,7 +768,7 @@ function Landing() {
             fontSize: '16px',
             marginBottom: '48px',
           }}>
-            From weekend road trips to international group travel — Collab Planner keeps every trip on track.
+            From weekend road trips to international group travel — Travel Gang keeps every trip on track.
           </p>
 
           <div style={{
@@ -792,7 +807,7 @@ function Landing() {
               marginBottom: '20px',
               lineHeight: '1.6',
             }}>
-              "Collab Planner made organizing our group trip to Japan so much easier.
+              "Travel Gang made organizing our group trip to Japan so much easier.
               Everyone knew their tasks, the itinerary was always up to date, and splitting expenses was a breeze!"
             </p>
             <div style={{ color: colors.textSecondary }}>
@@ -901,7 +916,7 @@ function Landing() {
             fontSize: '18px',
             marginBottom: '40px',
           }}>
-            Join travel groups who use Collab Planner to organize trips, manage itineraries, and split expenses — all in one place.
+            Join travel groups who use Travel Gang to organize trips, manage itineraries, and split expenses — all in one place.
           </p>
           <button
             onClick={() => navigate('/login?signup=true')}
@@ -943,10 +958,10 @@ function Landing() {
           marginBottom: '20px',
           flexWrap: 'wrap',
         }}>
-          {['About', 'Features', 'Pricing', 'Blog', 'Privacy', 'Terms'].map((link) => (
+          {['About', 'Features', 'Pricing', 'Blog', 'Affiliates', 'Privacy', 'Terms'].map((link) => (
             <a
               key={link}
-              href={link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : link === 'Blog' ? '/blog' : link === 'Terms' ? '/terms' : link === 'Privacy' ? '/privacy' : '#'}
+              href={link === 'Features' ? '#features' : link === 'Pricing' ? '#pricing' : link === 'Blog' ? '/blog' : link === 'Terms' ? '/terms' : link === 'Privacy' ? '/privacy' : link === 'Affiliates' ? '/affiliates' : '#'}
               style={{
                 color: colors.textSecondary,
                 textDecoration: 'none',
@@ -960,7 +975,7 @@ function Landing() {
           ))}
         </div>
         <p style={{ color: colors.textMuted, fontSize: '14px' }}>
-          © 2026 Collab Planner. All rights reserved. · Group Travel Planner App
+          © 2026 Travel Gang. All rights reserved. · Group Travel Planner App
         </p>
       </footer>
     </div>

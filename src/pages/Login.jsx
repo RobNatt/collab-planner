@@ -265,7 +265,7 @@ function Login() {
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </h1>
           <p style={{ color: colors.textSecondary }}>
-            {isSignUp ? 'Sign up to start planning' : 'Login to Collab Planner'}
+            {isSignUp ? 'Sign up to start planning' : 'Login to Travel Gang'}
           </p>
         </div>
 
