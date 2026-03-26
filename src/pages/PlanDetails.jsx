@@ -1315,7 +1315,9 @@ function PlanDetails() {
                     <span style={{
                       textDecoration: activity.completed ? 'line-through' : 'none',
                       color: activity.completed ? colors.textMuted : colors.text,
-                      fontSize: '16px',
+                      fontSize: '20px',
+                      fontWeight: '700',
+                      lineHeight: '1.35',
                     }}>
                       {activity.title}
                     </span>
