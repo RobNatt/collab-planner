@@ -210,6 +210,21 @@ function getAppBaseUrl() {
   );
 }
 
+function resolveAppBaseUrl(clientBaseUrl) {
+  const raw = String(clientBaseUrl || '').trim();
+  if (raw) {
+    try {
+      const parsed = new URL(raw);
+      if (parsed.protocol === 'https:' || parsed.hostname === 'localhost') {
+        return raw.replace(/\/$/, '');
+      }
+    } catch (_) {
+      // Fall through to server config/default.
+    }
+  }
+  return getAppBaseUrl().replace(/\/$/, '');
+}
+
 function normalizeInviteCode(code) {
   return String(code || '').trim().toUpperCase();
 }
@@ -427,7 +442,7 @@ exports.createCollaboratorJoinCheckout = functions.https.onCall(async (data, con
     throw new functions.https.HttpsError('failed-precondition', 'Admin must purchase a paid plan before approving collaborators.');
   }
 
-  const appBase = getAppBaseUrl().replace(/\/$/, '');
+  const appBase = resolveAppBaseUrl(data?.appBaseUrl);
   const successUrl = `${appBase}/invite-payment/success?requestId=${encodeURIComponent(requestId)}&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${appBase}/plan/${request.planId}`;
   const amountCents = Number(request.amountCents || 100);

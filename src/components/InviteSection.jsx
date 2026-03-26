@@ -194,7 +194,10 @@ function InviteSection({ plan }) {
     setActingRequestId(requestId);
     try {
       const createCheckout = httpsCallable(functions, 'createCollaboratorJoinCheckout');
-      const result = await createCheckout({ requestId });
+      const result = await createCheckout({
+        requestId,
+        appBaseUrl: window.location.origin,
+      });
       const url = result?.data?.url;
       if (!url) throw new Error('Stripe checkout URL missing.');
       window.location.href = url;
