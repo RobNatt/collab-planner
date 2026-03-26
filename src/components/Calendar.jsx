@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 function Calendar({ plan, activities = [], onDayClick }) {
   const [viewMode, setViewMode] = useState('month'); // 'month' or 'week'
+  const [scopeMode, setScopeMode] = useState('full'); // 'full' or 'trip'
 
   // Parse plan dates
   const startDate = new Date(plan.startDate);
@@ -86,6 +87,26 @@ function Calendar({ plan, activities = [], onDayClick }) {
     return days;
   };
 
+  const generateTripWindowDays = () => {
+    const windowStart = new Date(startDate);
+    windowStart.setDate(windowStart.getDate() - 2);
+    const windowEnd = new Date(endDate);
+    windowEnd.setDate(windowEnd.getDate() + 2);
+
+    const days = [];
+    const startPadding = windowStart.getDay();
+    for (let i = 0; i < startPadding; i++) {
+      days.push(null);
+    }
+
+    const cursor = new Date(windowStart);
+    while (cursor <= windowEnd) {
+      days.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return days;
+  };
+
   // Navigate months
   const previousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -112,7 +133,9 @@ function Calendar({ plan, activities = [], onDayClick }) {
     'July', 'August', 'September', 'October', 'November', 'December'];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const days = viewMode === 'month' ? generateMonthDays() : generateWeekDays();
+  const days = scopeMode === 'trip'
+    ? generateTripWindowDays()
+    : (viewMode === 'month' ? generateMonthDays() : generateWeekDays());
 
   // Calculate trip duration
   const tripDuration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
@@ -129,7 +152,38 @@ function Calendar({ plan, activities = [], onDayClick }) {
         <h3 style={{ margin: 0 }}>📅 Trip Calendar</h3>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
+            onClick={() => setScopeMode('full')}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: scopeMode === 'full' ? '#4CAF50' : '#ddd',
+              color: scopeMode === 'full' ? 'white' : '#333',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}
+          >
+            Full Calendar
+          </button>
+          <button
+            onClick={() => setScopeMode('trip')}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: scopeMode === 'trip' ? '#4CAF50' : '#ddd',
+              color: scopeMode === 'trip' ? 'white' : '#333',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}
+          >
+            Trip Focus (±2 days)
+          </button>
+          <button
             onClick={() => setViewMode('month')}
+            disabled={scopeMode === 'trip'}
             style={{
               padding: '6px 12px',
               backgroundColor: viewMode === 'month' ? '#2196F3' : '#ddd',
@@ -138,13 +192,15 @@ function Calendar({ plan, activities = [], onDayClick }) {
               borderRadius: '5px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              opacity: scopeMode === 'trip' ? 0.55 : 1,
             }}
           >
             Month
           </button>
           <button
             onClick={() => setViewMode('week')}
+            disabled={scopeMode === 'trip'}
             style={{
               padding: '6px 12px',
               backgroundColor: viewMode === 'week' ? '#2196F3' : '#ddd',
@@ -153,7 +209,8 @@ function Calendar({ plan, activities = [], onDayClick }) {
               borderRadius: '5px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              opacity: scopeMode === 'trip' ? 0.55 : 1,
             }}
           >
             Week
@@ -187,37 +244,45 @@ function Calendar({ plan, activities = [], onDayClick }) {
       </div>
 
       {/* Navigation */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <button
-          onClick={viewMode === 'month' ? previousMonth : previousWeek}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#fff',
-            border: '1px solid #ddd',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          ← {viewMode === 'month' ? 'Previous' : 'Prev Week'}
-        </button>
-        <h4 style={{ margin: 0 }}>
-          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-        </h4>
-        <button
-          onClick={viewMode === 'month' ? nextMonth : nextWeek}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#fff',
-            border: '1px solid #ddd',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          {viewMode === 'month' ? 'Next' : 'Next Week'} →
-        </button>
-      </div>
+      {scopeMode === 'full' ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <button
+            onClick={viewMode === 'month' ? previousMonth : previousWeek}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            ← {viewMode === 'month' ? 'Previous' : 'Prev Week'}
+          </button>
+          <h4 style={{ margin: 0 }}>
+            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+          </h4>
+          <button
+            onClick={viewMode === 'month' ? nextMonth : nextWeek}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            {viewMode === 'month' ? 'Next' : 'Next Week'} →
+          </button>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+          <h4 style={{ margin: 0 }}>
+            Trip Focus Window ({new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}, plus 2 days on each side)
+          </h4>
+        </div>
+      )}
 
       {/* Calendar Grid */}
       <div style={{
@@ -267,7 +332,7 @@ function Calendar({ plan, activities = [], onDayClick }) {
                 border: isToday ? '2px solid #FF9800' : '1px solid #ddd',
                 fontWeight: inRange || isToday ? 'bold' : 'normal',
                 position: 'relative',
-                minHeight: viewMode === 'month' ? '60px' : '80px',
+                minHeight: scopeMode === 'trip' ? '70px' : (viewMode === 'month' ? '60px' : '80px'),
                 cursor: onDayClick ? 'pointer' : 'default',
                 transition: 'transform 0.1s',
               }}
