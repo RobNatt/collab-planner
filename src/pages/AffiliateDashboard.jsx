@@ -90,7 +90,7 @@ function AffiliateDashboard() {
         margin: '0 auto',
       }}>
         <div onClick={() => navigate('/')} style={{ fontSize: '24px', fontWeight: 'bold', color: colors.primary, cursor: 'pointer' }}>
-          Travel Gang
+          Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <ThemeToggle />

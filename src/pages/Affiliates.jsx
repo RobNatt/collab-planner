@@ -91,7 +91,7 @@ function Affiliates() {
         margin: '0 auto',
       }}>
         <div onClick={() => navigate('/')} style={{ fontSize: '24px', fontWeight: 'bold', color: colors.primary, cursor: 'pointer' }}>
-          Travel Gang
+          Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <ThemeToggle />
@@ -114,7 +114,7 @@ function Affiliates() {
 
       <section style={{ maxWidth: '700px', margin: '0 auto', padding: '40px 24px 80px' }}>
         <h1 style={{ color: colors.text, fontSize: '32px', fontWeight: '800', marginBottom: '12px' }}>
-          Travel Gang Affiliate Program
+          Collab Planner Affiliate Program
         </h1>
         <p style={{ color: colors.textSecondary, fontSize: '16px', lineHeight: '1.6', marginBottom: '32px' }}>
           Earn 20% on the first payment when a customer uses your link, and 5% recurring after 3 months from everyone who subscribes through you.
@@ -128,7 +128,7 @@ function Affiliates() {
           marginBottom: '32px',
         }}>
           <p style={{ color: colors.text, fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
-            <strong>Terms:</strong> Affiliates are subject to disqualification for not meeting performance standards or for conduct that damages the reputation of Travel Gang. Approval is at our sole discretion.
+            <strong>Terms:</strong> Affiliates are subject to disqualification for not meeting performance standards or for conduct that damages the reputation of Collab Planner. Approval is at our sole discretion.
           </p>
         </div>
 

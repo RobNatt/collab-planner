@@ -24,7 +24,7 @@ function Terms() {
       {/* Nav */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', maxWidth: '1400px', margin: '0 auto' }}>
         <div onClick={() => navigate('/')} style={{ fontSize: '24px', fontWeight: 'bold', color: colors.primary, cursor: 'pointer' }}>
-          Travel Gang
+          Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <ThemeToggle />
@@ -47,17 +47,17 @@ function Terms() {
 
         <div style={{ padding: '16px 20px', backgroundColor: `${colors.warning}15`, border: `1px solid ${colors.warning}40`, borderRadius: '8px', marginBottom: '36px' }}>
           <p style={{ color: colors.text, fontSize: '14px', margin: 0, lineHeight: '1.6' }}>
-            <strong>Please read these Terms of Service carefully before using Travel Gang.</strong> By accessing or using our service, you agree to be bound by these terms. If you do not agree, do not use the service.
+            <strong>Please read these Terms of Service carefully before using Collab Planner.</strong> By accessing or using our service, you agree to be bound by these terms. If you do not agree, do not use the service.
           </p>
         </div>
 
         <Section title="1. Acceptance of Terms">
-          {p('By creating an account, accessing, or using Travel Gang ("the Service"), you agree to be bound by these Terms of Service ("Terms"). These Terms apply to all visitors, users, and others who access the Service.')}
+          {p('By creating an account, accessing, or using Collab Planner ("the Service"), you agree to be bound by these Terms of Service ("Terms"). These Terms apply to all visitors, users, and others who access the Service.')}
           {p('We reserve the right to update these Terms at any time. Continued use of the Service after changes constitutes acceptance of the new Terms. We will notify users of material changes via email or an in-app notice.')}
         </Section>
 
         <Section title="2. Description of Service">
-          {p('Travel Gang is a collaborative trip planning web application that allows users to create plans, manage tasks, track expenses, and coordinate with group members in real time.')}
+          {p('Collab Planner is a collaborative trip planning web application that allows users to create plans, manage tasks, track expenses, and coordinate with group members in real time.')}
           {p('The Service is provided "as is" and we reserve the right to modify, suspend, or discontinue any part of the Service at any time, with or without notice.')}
         </Section>
 
@@ -69,7 +69,7 @@ function Terms() {
         </Section>
 
         <Section title="4. Payments and Plans">
-          {p('Travel Gang offers the following plans:')}
+          {p('Collab Planner offers the following plans:')}
           <ul style={{ paddingLeft: '20px', marginBottom: '12px' }}>
             <li style={{ marginBottom: '6px' }}><strong>Free / Pay Per Trip:</strong> Sign up free. Pay-per-trip users pay $2 per trip at confirmation plus $1 per collaborator when they join.</li>
             <li style={{ marginBottom: '6px' }}><strong>Individual Monthly:</strong> $10/month, unlimited plans, $1 per collaborator when they join a trip.</li>
@@ -120,7 +120,7 @@ function Terms() {
         </Section>
 
         <Section title="9. Intellectual Property">
-          {p('The Service and its original content, features, and functionality are owned by Travel Gang and are protected by applicable intellectual property laws.')}
+          {p('The Service and its original content, features, and functionality are owned by Collab Planner and are protected by applicable intellectual property laws.')}
           {p('You may not copy, modify, distribute, sell, or lease any part of the Service or its software without our prior written consent.')}
         </Section>
 
@@ -131,18 +131,18 @@ function Terms() {
         </Section>
 
         <Section title="11. Limitation of Liability">
-          {p('TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL TRAVEL GANG, ITS OPERATORS, DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES — INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, GOODWILL, OR OTHER INTANGIBLE LOSSES — ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SERVICE.')}
+          {p('TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL COLLAB PLANNER, ITS OPERATORS, DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES — INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, GOODWILL, OR OTHER INTANGIBLE LOSSES — ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SERVICE.')}
           {p('OUR TOTAL CUMULATIVE LIABILITY TO YOU FOR ANY CLAIMS ARISING UNDER THESE TERMS SHALL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID TO US IN THE 12 MONTHS PRIOR TO THE CLAIM, OR (B) $49 USD.')}
           {p('SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF CERTAIN WARRANTIES OR LIMITATIONS ON LIABILITY. IN SUCH CASES, OUR LIABILITY WILL BE LIMITED TO THE FULLEST EXTENT PERMITTED BY LAW.')}
         </Section>
 
         <Section title="12. Indemnification">
-          {p('You agree to defend, indemnify, and hold harmless Travel Gang and its operators from any claims, damages, obligations, losses, liabilities, costs, or expenses (including attorney\'s fees) arising from: (a) your use of the Service; (b) your User Content; (c) your violation of these Terms; or (d) your violation of any third-party rights.')}
+          {p('You agree to defend, indemnify, and hold harmless Collab Planner and its operators from any claims, damages, obligations, losses, liabilities, costs, or expenses (including attorney\'s fees) arising from: (a) your use of the Service; (b) your User Content; (c) your violation of these Terms; or (d) your violation of any third-party rights.')}
         </Section>
 
         <Section title="13. Affiliate Program">
-          {p('Travel Gang may offer an affiliate program. Affiliates earn 20% commission on the first payment when a customer uses their referral link, and 5% recurring commission after 3 months from customers who continue their subscription.')}
-          {p('Affiliates are subject to disqualification for failing to meet performance standards or for conduct that damages the reputation of Travel Gang. Participation in the affiliate program is at our sole discretion.')}
+          {p('Collab Planner may offer an affiliate program. Affiliates earn 20% commission on the first payment when a customer uses their referral link, and 5% recurring commission after 3 months from customers who continue their subscription.')}
+          {p('Affiliates are subject to disqualification for failing to meet performance standards or for conduct that damages the reputation of Collab Planner. Participation in the affiliate program is at our sole discretion.')}
           {p('Additional affiliate terms and conditions apply and will be provided upon approval of an affiliate application.')}
         </Section>
 
@@ -168,7 +168,7 @@ function Terms() {
 
         <div style={{ padding: '20px', backgroundColor: colors.backgroundTertiary, borderRadius: '10px', marginTop: '20px' }}>
           <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
-            These Terms of Service were last updated on March 1, 2026. By continuing to use Travel Gang after this date, you agree to the current Terms of Service.
+            These Terms of Service were last updated on March 1, 2026. By continuing to use Collab Planner after this date, you agree to the current Terms of Service.
           </p>
         </div>
       </div>

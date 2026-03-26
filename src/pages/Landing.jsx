@@ -38,7 +38,7 @@ function Landing() {
           fontWeight: 'bold',
           color: colors.primary,
         }}>
-          Travel Gang
+          Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <button
@@ -315,7 +315,7 @@ function Landing() {
               color: colors.text,
               marginBottom: '16px',
             }}>
-              What is Travel Gang? — An Online Travel Planner for Groups
+              What is Collab Planner? — An Online Travel Planner for Groups
             </h2>
             <p style={{
               color: colors.textSecondary,
@@ -324,7 +324,7 @@ function Landing() {
               margin: '0 auto',
               lineHeight: '1.7',
             }}>
-              Travel Gang is a free <strong style={{ color: colors.text }}>online travel planner</strong> built for groups.
+              Collab Planner is a free <strong style={{ color: colors.text }}>online travel planner</strong> built for groups.
               Whether you're organizing a weekend road trip or a two-week vacation abroad, our
               {' '}<strong style={{ color: colors.text }}>group trip planner</strong> keeps everyone on the same page —
               tasks, activities, shared expenses, and dates, all in one collaborative workspace.
@@ -340,7 +340,7 @@ function Landing() {
               {
                 icon: '👫',
                 title: 'Friends Planning a Trip',
-                description: 'Stop juggling Google Docs, group chats, and spreadsheets. Travel Gang puts your entire group trip — dates, destinations, tasks, and money — in one shared space everyone can edit.',
+                description: 'Stop juggling Google Docs, group chats, and spreadsheets. Collab Planner puts your entire group trip — dates, destinations, tasks, and money — in one shared space everyone can edit.',
               },
               {
                 icon: '👨‍👩‍👧‍👦',
@@ -768,7 +768,7 @@ function Landing() {
             fontSize: '16px',
             marginBottom: '48px',
           }}>
-            From weekend road trips to international group travel — Travel Gang keeps every trip on track.
+            From weekend road trips to international group travel — Collab Planner keeps every trip on track.
           </p>
 
           <div style={{
@@ -807,7 +807,7 @@ function Landing() {
               marginBottom: '20px',
               lineHeight: '1.6',
             }}>
-              "Travel Gang made organizing our group trip to Japan so much easier.
+              "Collab Planner made organizing our group trip to Japan so much easier.
               Everyone knew their tasks, the itinerary was always up to date, and splitting expenses was a breeze!"
             </p>
             <div style={{ color: colors.textSecondary }}>
@@ -916,7 +916,7 @@ function Landing() {
             fontSize: '18px',
             marginBottom: '40px',
           }}>
-            Join travel groups who use Travel Gang to organize trips, manage itineraries, and split expenses — all in one place.
+            Join travel groups who use Collab Planner to organize trips, manage itineraries, and split expenses — all in one place.
           </p>
           <button
             onClick={() => navigate('/login?signup=true')}
@@ -975,7 +975,7 @@ function Landing() {
           ))}
         </div>
         <p style={{ color: colors.textMuted, fontSize: '14px' }}>
-          © 2026 Travel Gang. All rights reserved. · Group Travel Planner App
+          © 2026 Collab Planner. All rights reserved. · Group Travel Planner App
         </p>
       </footer>
     </div>

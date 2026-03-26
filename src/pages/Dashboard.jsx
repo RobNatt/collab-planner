@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut, sendEmailVerification } from 'firebase/auth';
+import { signOut, sendEmailVerification, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import CreatePlan from '../components/CreatePlan';
 import PlansList from '../components/PlansList';
@@ -16,11 +16,17 @@ import toast from 'react-hot-toast';
 function Dashboard() {
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { profile, loading } = useUserProfile(auth.currentUser?.uid, refreshKey);
+  /** undefined = auth still restoring; null = signed out; User = signed in */
+  const [firebaseUser, setFirebaseUser] = useState(undefined);
+  const { profile, loading: profileLoading } = useUserProfile(
+    firebaseUser ? firebaseUser.uid : undefined,
+    refreshKey
+  );
+  const loading = firebaseUser === undefined || (firebaseUser && profileLoading);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const setupDismissed = useRef(false);
   const { colors } = useTheme();
-  const { isLTD, hasUnlimitedAccess } = useLicense(auth.currentUser?.uid);
+  const { isLTD, hasUnlimitedAccess } = useLicense(firebaseUser?.uid);
 
   const handleLogout = async () => {
     try {
@@ -44,10 +50,32 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    if (!loading && !profile && !showProfileSetup && !setupDismissed.current) {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user ?? null);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (firebaseUser === null) {
+      navigate('/login');
+    }
+  }, [firebaseUser, navigate]);
+
+  useEffect(() => {
+    if (firebaseUser === undefined || loading) return;
+    if (profile) {
+      setShowProfileSetup(false);
+      return;
+    }
+    if (!showProfileSetup && !setupDismissed.current) {
       setShowProfileSetup(true);
     }
-  }, [loading, profile, showProfileSetup]);
+  }, [firebaseUser, loading, profile, showProfileSetup]);
+
+  if (firebaseUser === null) {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -101,7 +129,7 @@ function Dashboard() {
 
   const handleResendVerification = async () => {
     try {
-      await sendEmailVerification(auth.currentUser);
+      await sendEmailVerification(firebaseUser);
       toast.success('Verification email sent! Check your inbox.');
     } catch {
       toast.error('Please wait before requesting another email.');
@@ -131,7 +159,7 @@ function Dashboard() {
             transition: 'all 0.3s ease',
           }}
         >
-          {auth.currentUser && !auth.currentUser.emailVerified && (
+          {firebaseUser && !firebaseUser.emailVerified && (
             <div style={{
               padding: '12px 16px',
               backgroundColor: `${colors.warning}15`,

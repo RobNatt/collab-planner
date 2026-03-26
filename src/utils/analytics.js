@@ -56,7 +56,7 @@ export function trackCheckoutStarted() {
   trackEvent('checkout_started', {
     currency: 'USD',
     value: 49,
-    item_name: 'Travel Gang Lifetime Deal',
+    item_name: 'Collab Planner Lifetime Deal',
   });
 }
 
@@ -75,8 +75,8 @@ export function trackPurchaseComplete(userId) {
     value: 49,
     items: [
       {
-        item_id: 'travel_gang_ltd',
-        item_name: 'Travel Gang Lifetime Deal',
+        item_id: 'collab_planner_ltd',
+        item_name: 'Collab Planner Lifetime Deal',
         price: 49,
         quantity: 1,
       },

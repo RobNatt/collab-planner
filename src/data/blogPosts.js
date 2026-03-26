@@ -17,7 +17,7 @@ For a long time, spreadsheets were the default tool for planning trips. They wer
 
 But they were never designed specifically for travel.
 
-As group trips become more common — and more complex — the limitations of spreadsheet travel planning become clear. And that's where a dedicated [collaborative travel planner](/) like Travel Gang stands apart.
+As group trips become more common — and more complex — the limitations of spreadsheet travel planning become clear. And that's where a dedicated [collaborative travel planner](/) like Collab Planner stands apart.
 
 ## The Illusion of Control in Spreadsheets
 
@@ -49,7 +49,7 @@ One of the most frustrating parts of spreadsheet planning is version control.
 "Who edited this?"
 "Why is my column gone?"
 
-Travel Gang eliminates those questions entirely. Everyone works inside the same live environment. Changes are immediate. Visibility is shared across every member of the group.
+Collab Planner eliminates those questions entirely. Everyone works inside the same live environment. Changes are immediate. Visibility is shared across every member of the group.
 
 Collaboration feels seamless instead of technical.
 
@@ -61,7 +61,7 @@ Travel planners are built for itineraries, experiences, and shared adventures.
 
 If you're planning a solo weekend, a spreadsheet might be enough. But if you're organizing a group trip with multiple moving parts, a dedicated travel planner offers clarity, collaboration, and confidence that traditional tools simply weren't designed to provide.
 
-[Try Travel Gang free — no spreadsheet required →](/login?signup=true)
+[Try Collab Planner free — no spreadsheet required →](/login?signup=true)
     `.trim(),
   },
   {
@@ -78,7 +78,7 @@ There's something uniquely special about traveling with friends. Shared jokes be
 
 Without structure, friends' trip planning quickly turns into scattered ideas and miscommunication. One person takes control. Others disengage. Decisions stall. Excitement fades.
 
-The best way to plan a friends' trip today is with a [collaborative online travel planner](/) built specifically for groups — like Travel Gang.
+The best way to plan a friends' trip today is with a [collaborative online travel planner](/) built specifically for groups — like Collab Planner.
 
 ## Why Friends' Trips Get Complicated
 
@@ -96,7 +96,7 @@ The biggest advantage of a shared travel planner is distributed ownership.
 
 Instead of one person acting as the unofficial trip manager, everyone can contribute. Someone researches restaurants. Another finds activities. Another compares accommodations.
 
-Because Travel Gang is built for collaboration, participation feels natural. People are more invested in the trip when they had a hand in building it. And that investment shows up in the experience itself.
+Because Collab Planner is built for collaboration, participation feels natural. People are more invested in the trip when they had a hand in building it. And that investment shows up in the experience itself.
 
 ## Moving Beyond Spreadsheets and Screenshots
 
@@ -112,7 +112,7 @@ There's a certain calm that comes from knowing everything is organized.
 
 When flights are visible. When check-in times are confirmed. When dinner reservations are locked in. When everyone understands the schedule.
 
-Travel Gang creates that clarity long before you board the plane — and clarity transforms how the trip feels, even before it begins.
+Collab Planner creates that clarity long before you board the plane — and clarity transforms how the trip feels, even before it begins.
 
 ## The Real Benefit: Protecting the Friendship
 
@@ -122,7 +122,7 @@ Miscommunication about money or plans can create tension that lingers long after
 
 That's not just convenient — it's protective.
 
-[Plan your next friends' trip with Travel Gang — free to start →](/login?signup=true)
+[Plan your next friends' trip with Collab Planner — free to start →](/login?signup=true)
     `.trim(),
   },
   {
@@ -191,7 +191,7 @@ Digital collaboration tools have transformed how we work — and they're transfo
 
 An online group travel planner isn't just a convenience. It's a structure that protects your time, your friendships, and your experience. When your logistics are handled, you're free to focus on what matters: enjoying the trip.
 
-[Start planning your group trip for free with Travel Gang →](/login?signup=true)
+[Start planning your group trip for free with Collab Planner →](/login?signup=true)
     `.trim(),
   },
   {
@@ -251,7 +251,7 @@ This is where most groups still use a Google Doc or group chat — and it falls 
 - Vote on options (instead of everyone arguing in the chat)
 - Track what's been booked vs. still pending
 
-With Travel Gang, your group builds the itinerary together in real time. No more "wait, I thought we were going to..." moments.
+With Collab Planner, your group builds the itinerary together in real time. No more "wait, I thought we were going to..." moments.
 
 ## Step 6: Track Expenses as You Go
 
@@ -263,7 +263,7 @@ Keep a running total of:
 - Activities and tours
 - Transportation (Ubers, trains, car rentals)
 
-Travel Gang's expense tracker handles the math automatically — it tells you exactly who owes whom and how much, so the settlement conversation takes 30 seconds instead of 30 minutes.
+Collab Planner's expense tracker handles the math automatically — it tells you exactly who owes whom and how much, so the settlement conversation takes 30 seconds instead of 30 minutes.
 
 ## Step 7: Create a Pre-Trip Packing/Task List
 
@@ -278,7 +278,7 @@ Assign tasks to specific people with due dates. When everyone knows what they ow
 
 ## The Shortcut
 
-All seven of these steps are built into Travel Gang. Instead of bouncing between a calendar, spreadsheet, group chat, and notes app — your group gets one shared workspace that handles trip planning from "are we doing this?" to "that was the best trip ever."
+All seven of these steps are built into Collab Planner. Instead of bouncing between a calendar, spreadsheet, group chat, and notes app — your group gets one shared workspace that handles trip planning from "are we doing this?" to "that was the best trip ever."
 
 [Start planning your next group trip for free →](/login?signup=true)
     `.trim(),

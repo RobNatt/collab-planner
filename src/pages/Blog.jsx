@@ -30,7 +30,7 @@ function Blog() {
             padding: 0,
           }}
         >
-          Travel Gang
+          Collab Planner
         </button>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <ThemeToggle />
@@ -82,7 +82,7 @@ function Blog() {
           margin: '0 auto',
           lineHeight: '1.6',
         }}>
-          Group travel planning advice, itinerary ideas, and trip coordination tips — from the team behind Travel Gang.
+          Group travel planning advice, itinerary ideas, and trip coordination tips — from the team behind Collab Planner.
         </p>
       </section>
 
@@ -193,10 +193,10 @@ function Blog() {
           onClick={() => navigate('/')}
           style={{ background: 'none', border: 'none', color: colors.primary, fontWeight: '700', fontSize: '18px', cursor: 'pointer', marginBottom: '12px' }}
         >
-          Travel Gang
+          Collab Planner
         </button>
         <p style={{ color: colors.textMuted, fontSize: '14px' }}>
-          © 2026 Travel Gang · Group Travel Planner App
+          © 2026 Collab Planner · Group Travel Planner App
         </p>
       </footer>
     </div>

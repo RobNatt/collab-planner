@@ -142,7 +142,7 @@ function Feedback() {
           onClick={() => navigate('/dashboard')}
           style={{ fontSize: '24px', fontWeight: 'bold', color: colors.primary, cursor: 'pointer' }}
         >
-          Travel Gang
+          Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <ThemeToggle />
@@ -168,7 +168,7 @@ function Feedback() {
           Feedback
         </h1>
         <p style={{ color: colors.textSecondary, marginBottom: '32px' }}>
-          Help us improve Travel Gang. Share reviews, suggest features, or report bugs.
+          Help us improve Collab Planner. Share reviews, suggest features, or report bugs.
         </p>
 
         {/* Tabs */}

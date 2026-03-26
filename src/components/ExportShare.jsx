@@ -198,7 +198,7 @@ function ExportShare({ plan, activities, expenses }) {
 
     html += `
         <div class="footer">
-          Generated from Travel Gang on ${new Date().toLocaleDateString()}
+          Generated from Collab Planner on ${new Date().toLocaleDateString()}
         </div>
       </body>
       </html>

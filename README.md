@@ -1,4 +1,4 @@
-# Travel Gang
+# Collab Planner
 
 A collaborative trip planning application built with React, Firebase, and Vite. Create shared plans for group trips, manage tasks, split expenses, and collaborate in real time.
 
@@ -23,8 +23,8 @@ A collaborative trip planning application built with React, Firebase, and Vite. 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_ORG/travel-gang.git
-cd travel-gang
+git clone https://github.com/YOUR_ORG/collab-planner.git
+cd collab-planner
 ```
 
 2. Install dependencies:

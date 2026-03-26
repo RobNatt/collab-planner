@@ -39,7 +39,7 @@ export const generateICalContent = (plan, activities = []) => {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Travel Gang//Trip Plan//EN',
+    'PRODID:-//Collab Planner//Trip Plan//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeIcal(plan.name)}`,
@@ -59,7 +59,7 @@ export const generateICalContent = (plan, activities = []) => {
       `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
       `DTEND;VALUE=DATE:${formatIcalDate(endDateStr)}`,
       `SUMMARY:${escapeIcal(plan.name)}`,
-      `DESCRIPTION:${escapeIcal(plan.description || 'Trip planned with Travel Gang')}`,
+      `DESCRIPTION:${escapeIcal(plan.description || 'Trip planned with Collab Planner')}`,
       'STATUS:CONFIRMED',
       'TRANSP:TRANSPARENT',
       'END:VEVENT',
@@ -128,7 +128,7 @@ export const getGoogleCalendarUrl = (plan) => {
     action: 'TEMPLATE',
     text: plan.name,
     dates: `${formatIcalDate(plan.startDate)}/${formatIcalDate(endDateStr)}`,
-    details: plan.description || `Trip planned with Travel Gang`,
+    details: plan.description || `Trip planned with Collab Planner`,
   });
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;

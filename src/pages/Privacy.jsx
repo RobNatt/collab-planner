@@ -24,7 +24,7 @@ function Privacy() {
       {/* Nav */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 40px', maxWidth: '1400px', margin: '0 auto' }}>
         <div onClick={() => navigate('/')} style={{ fontSize: '24px', fontWeight: 'bold', color: colors.primary, cursor: 'pointer' }}>
-          Travel Gang
+          Collab Planner
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <ThemeToggle />
@@ -52,7 +52,7 @@ function Privacy() {
         </div>
 
         <Section title="1. Who We Are">
-          {p('Travel Gang is a collaborative trip planning service. When this policy refers to "we," "us," or "our," it means Travel Gang and its operators.')}
+          {p('Collab Planner is a collaborative trip planning service. When this policy refers to "we," "us," or "our," it means Collab Planner and its operators.')}
           {p('If you have questions about this Privacy Policy, please contact us through the feedback form within the app.')}
         </Section>
 
@@ -106,7 +106,7 @@ function Privacy() {
         </Section>
 
         <Section title="5. Third-Party Services">
-          {p('We use the following third-party services to operate Travel Gang:')}
+          {p('We use the following third-party services to operate Collab Planner:')}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px' }}>
             {[
               { name: 'Firebase (Google)', use: 'Authentication, database, and hosting infrastructure', link: 'https://policies.google.com/privacy' },
@@ -123,7 +123,7 @@ function Privacy() {
         </Section>
 
         <Section title="6. Cookies and Local Storage">
-          {p('Travel Gang uses browser local storage (not traditional cookies) to store:')}
+          {p('Collab Planner uses browser local storage (not traditional cookies) to store:')}
           <ul style={{ paddingLeft: '20px', marginBottom: '12px' }}>
             {[
               'Your theme preference (light/dark mode)',
@@ -141,7 +141,7 @@ function Privacy() {
               'With other members of a plan you have joined, to enable collaboration features',
               'With third-party service providers listed above, solely to operate the Service',
               'If required by law, court order, or governmental authority',
-              'To protect the rights, property, or safety of Travel Gang or others',
+              'To protect the rights, property, or safety of Collab Planner or others',
               'In connection with a merger, acquisition, or sale of assets (you will be notified)',
             ].map((item, i) => <li key={i} style={{ marginBottom: '6px' }}>{item}</li>)}
           </ul>
@@ -164,12 +164,12 @@ function Privacy() {
         </Section>
 
         <Section title="9. Children's Privacy">
-          {p('Travel Gang is not directed at children under 13 years of age. We do not knowingly collect personal information from children under 13. If we learn we have collected information from a child under 13, we will delete it immediately.')}
+          {p('Collab Planner is not directed at children under 13 years of age. We do not knowingly collect personal information from children under 13. If we learn we have collected information from a child under 13, we will delete it immediately.')}
           {p('If you are a parent or guardian and believe your child has provided us with personal information, please contact us through the feedback form.')}
         </Section>
 
         <Section title="10. International Data Transfers">
-          {p('Travel Gang is operated from the United States. If you access the Service from outside the United States, your data may be transferred to and processed in the United States, where data protection laws may differ from your country.')}
+          {p('Collab Planner is operated from the United States. If you access the Service from outside the United States, your data may be transferred to and processed in the United States, where data protection laws may differ from your country.')}
           {p('By using the Service, you consent to the transfer of your information to the United States. We rely on Google Firebase\'s compliance with applicable data transfer frameworks for international data transfers.')}
         </Section>
 
@@ -197,7 +197,7 @@ function Privacy() {
 
         <div style={{ padding: '20px', backgroundColor: colors.backgroundTertiary, borderRadius: '10px', marginTop: '20px' }}>
           <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0, lineHeight: '1.6' }}>
-            This Privacy Policy was last updated on March 1, 2026. By using Travel Gang, you acknowledge that you have read and understood this Privacy Policy.
+            This Privacy Policy was last updated on March 1, 2026. By using Collab Planner, you acknowledge that you have read and understood this Privacy Policy.
           </p>
         </div>
       </div>

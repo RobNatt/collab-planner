@@ -41,7 +41,7 @@ function Welcome() {
   const tutorialSteps = [
     {
       icon: '👋',
-      title: 'Welcome to Travel Gang!',
+      title: 'Welcome to Collab Planner!',
       description: "We're excited to have you here. Let's take a quick tour of what you can do with your new planning companion.",
       tip: 'This will only take a minute!',
     },
@@ -122,7 +122,7 @@ function Welcome() {
         tutorialCompletedAt: new Date(),
       }, { merge: true });
 
-      toast.success('Welcome to Travel Gang!');
+      toast.success('Welcome to Collab Planner!');
       window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -156,7 +156,7 @@ function Welcome() {
         tutorialSkipped: true,
       }, { merge: true });
 
-      toast.success('Welcome to Travel Gang!');
+      toast.success('Welcome to Collab Planner!');
       window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error saving profile:', error);
