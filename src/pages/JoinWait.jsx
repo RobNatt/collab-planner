@@ -55,7 +55,7 @@ function JoinWait() {
       if (data.status === 'rejected') {
         setMessage('The administrator declined this collaborator request.');
       } else {
-        setMessage('Please wait while your acceptance is acknowledged by the administrator.');
+        setMessage('Please wait while your acceptance is acknowledged by the administrator. We will continue automatically as soon as payment is approved.');
       }
       setLoading(false);
     });

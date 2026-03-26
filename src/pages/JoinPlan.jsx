@@ -267,7 +267,7 @@ function JoinPlan() {
           <h2 style={{ color: colors.danger, marginBottom: '16px' }}>{error}</h2>
           <button
             type="button"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(`/invite/${inviteCode}`)}
             style={{
               marginTop: '16px',
               padding: '14px 32px',
@@ -281,7 +281,7 @@ function JoinPlan() {
               transition: 'all 0.2s ease',
             }}
           >
-            Go to Dashboard
+            Back to invite
           </button>
         </div>
       </div>

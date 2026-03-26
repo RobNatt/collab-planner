@@ -185,7 +185,7 @@ function InviteSection({ plan }) {
     }, (err) => {
       console.error('Pending collaborator query error:', err);
       setLoadingRequests(false);
-      toast.error('Could not load collaborator requests.');
+      toast.error('Could not load collaborator approvals. Refresh and try again.');
     });
     return () => unsub();
   }, [isAdmin, plan?.id]);
@@ -662,7 +662,7 @@ function InviteSection({ plan }) {
                           fontWeight: '600',
                         }}
                       >
-                        {actingRequestId === req.id ? 'Opening...' : `Accept payment for ${req.collaboratorName || 'collaborator'}?`}
+                        {actingRequestId === req.id ? 'Opening checkout...' : `Accept payment for ${req.collaboratorName || 'collaborator'}`}
                       </button>
                       <button
                         type="button"

@@ -277,7 +277,7 @@ function InviteLanding() {
               cursor: 'pointer',
             }}
           >
-            No thanks
+            No thanks, go back
           </button>
         </div>
       </div>
