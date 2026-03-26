@@ -218,7 +218,7 @@ function resolveAppBaseUrl(clientBaseUrl) {
       if (parsed.protocol === 'https:' || parsed.hostname === 'localhost') {
         return raw.replace(/\/$/, '');
       }
-    } catch (_) {
+    } catch {
       // Fall through to server config/default.
     }
   }

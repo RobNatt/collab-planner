@@ -18,9 +18,7 @@ function Welcome() {
   const [user, setUser] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [displayName, setDisplayName] = useState('');
-  const [avatarColor, setAvatarColor] = useState(
-    AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
-  );
+  const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isCollaborator = searchParams.get('collaborator') === '1';

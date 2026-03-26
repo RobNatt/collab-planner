@@ -84,14 +84,14 @@ function InviteLanding() {
   const handleYes = () => {
     try {
       sessionStorage.setItem(AUTO_JOIN_KEY, inviteCode);
-    } catch (_) { /* ignore */ }
+    } catch { /* ignore */ }
     goLogin(true);
   };
 
   const handleYesExisting = () => {
     try {
       sessionStorage.setItem(AUTO_JOIN_KEY, inviteCode);
-    } catch (_) { /* ignore */ }
+    } catch { /* ignore */ }
     goLogin(false);
   };
 

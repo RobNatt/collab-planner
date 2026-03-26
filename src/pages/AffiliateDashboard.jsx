@@ -21,7 +21,7 @@ function AffiliateDashboard() {
       return;
     }
     checkAffiliateAccess();
-  }, [auth.currentUser]);
+  }, [navigate]);
 
   const checkAffiliateAccess = async () => {
     try {
@@ -61,7 +61,7 @@ function AffiliateDashboard() {
       } else {
         toast.error('Invalid or unauthorized affiliate code.');
       }
-    } catch (err) {
+    } catch {
       toast.error('Verification failed. Try again.');
     } finally {
       setVerifying(false);

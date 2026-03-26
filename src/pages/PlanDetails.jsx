@@ -3,7 +3,7 @@
 // ========================================
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc, arrayRemove, onSnapshot } from 'firebase/firestore';
+import { doc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc, arrayRemove, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import MembersList from '../components/Memberslist.jsx';
 import InviteSection from '../components/InviteSection.jsx';
@@ -38,6 +38,8 @@ import {
 } from '../utils/activityLogger';
 import toast from 'react-hot-toast';
 
+const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
+
 // ========================================
 // MAIN COMPONENT
 // ========================================
@@ -62,14 +64,13 @@ function PlanDetails() {
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskAssignee, setNewTaskAssignee] = useState('');
   const { colors } = useTheme();
-  const { sendNotification, toggleNotifications, enabled: notificationsEnabled, isSupported: notificationsSupported, requestPermission } = useNotifications();
+  const { sendNotification, toggleNotifications, enabled: notificationsEnabled, isSupported: notificationsSupported } = useNotifications();
   useReminders(plan, activities);
 
   // Action-specific loading states
   const [addingTask, setAddingTask] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [expandedComments, setExpandedComments] = useState(null); // Track which task has expanded comments
-  const [actionLoading, setActionLoading] = useState({}); // For individual item actions
 
   // Expense tracking state
   const [expenses, setExpenses] = useState([]);
@@ -206,15 +207,11 @@ function PlanDetails() {
       unsubscribeActivities();
       unsubscribeExpenses();
     };
-  }, [planId, navigate]);
+  }, [planId, navigate, sendNotification]);
 
   // Legacy fetch function for manual refresh (kept for compatibility)
   const fetchPlanAndActivities = async () => {
     // Now handled by real-time listeners, but kept for any manual refresh needs
-  };
-
-  const fetchExpenses = async () => {
-    // Now handled by real-time listeners
   };
 
   // ========================================
@@ -663,8 +660,6 @@ function PlanDetails() {
   // ========================================
   // FILTER AND SORT ACTIVITIES
   // ========================================
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
-
   const filteredActivities = useMemo(() => {
     let filtered = activities.filter(activity => {
       const activityType = activity.type || 'task';
@@ -679,7 +674,7 @@ function PlanDetails() {
         case 'newest':
           return (b.createdAt?.toDate?.() || new Date(b.createdAt)) - (a.createdAt?.toDate?.() || new Date(a.createdAt));
         case 'priority':
-          return (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1);
+          return (PRIORITY_ORDER[a.priority] || 1) - (PRIORITY_ORDER[b.priority] || 1);
         case 'dueDate':
           if (!a.dueDate && !b.dueDate) return 0;
           if (!a.dueDate) return 1;
@@ -2541,7 +2536,7 @@ function PlanDetails() {
                     borderRadius: '2px',
                   }} />
 
-                  {Object.entries(groupedByDate).map(([date, dateActivities], index) => {
+                  {Object.entries(groupedByDate).map(([date, dateActivities]) => {
                     const isPast = date < today;
                     const isToday = date === today;
                     const dateObj = new Date(date + 'T00:00:00');

@@ -56,7 +56,7 @@ function JoinPlan() {
       if (planData.members.includes(uid)) {
         try {
           sessionStorage.removeItem(AUTO_JOIN_KEY);
-        } catch (_) { /* ignore */ }
+        } catch { /* ignore */ }
         toast.success('You are already a member of this plan!');
         setTimeout(() => navigate(`/plan/${planData.id}`), 800);
         setLoading(false);
@@ -127,7 +127,7 @@ function JoinPlan() {
     if (!plan || !auth.currentUser) return;
     try {
       sessionStorage.removeItem(AUTO_JOIN_KEY);
-    } catch (_) { /* ignore */ }
+    } catch { /* ignore */ }
 
     setJoining(true);
     try {

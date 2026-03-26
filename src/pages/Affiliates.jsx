@@ -23,11 +23,13 @@ function Affiliates() {
     otherSocial: '',
   });
 
+  const userEmail = auth.currentUser?.email || '';
+
   useEffect(() => {
-    if (auth.currentUser?.email) {
-      setFormData((prev) => ({ ...prev, email: prev.email || auth.currentUser.email }));
+    if (userEmail) {
+      setFormData((prev) => ({ ...prev, email: prev.email || userEmail }));
     }
-  }, [auth.currentUser?.email]);
+  }, [userEmail]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));

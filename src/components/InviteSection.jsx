@@ -113,13 +113,13 @@ function InviteSection({ plan }) {
         if (profSnap.exists() && profSnap.data().displayName?.trim()) {
           hostDisplayName = profSnap.data().displayName.trim();
         }
-      } catch (_) { /* keep fallback name */ }
+      } catch { /* keep fallback name */ }
       try {
         const licSnap = await getDoc(doc(db, 'licenses', adminId));
         const lic = licSnap.data();
         const licensePlan = lic?.plan || (lic?.status === 'active' ? 'ltd' : null);
         billingKind = billingKindFromLicensePlan(licensePlan);
-      } catch (_) { /* free */ }
+      } catch { /* free */ }
 
       await updateDoc(doc(db, 'plans', plan.id), updateData);
 

@@ -5,7 +5,7 @@ import { useUserProfiles } from '../hooks/useUserProfile';
 import { getUserDisplayName } from '../utils/userHelpers';
 
 function MembersList({ plan, onMemberRemoved }) {
-  const memberIds = plan?.members || [];
+  const memberIds = useMemo(() => plan?.members || [], [plan]);
   const { profiles, loading } = useUserProfiles(memberIds);
 
   const members = useMemo(() => (

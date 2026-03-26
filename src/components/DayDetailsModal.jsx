@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 function DayDetailsModal({ date, activities, onClose, isAdmin, onUnschedule }) {
   if (!date) return null;
 

@@ -40,6 +40,7 @@ export function useUserProfile(userId, refreshTrigger = 0) {
 export function useUserProfiles(userIds) {
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
+  const userIdsKey = JSON.stringify(userIds || []);
 
   useEffect(() => {
     if (!userIds || userIds.length === 0) {
@@ -74,7 +75,7 @@ export function useUserProfiles(userIds) {
     };
 
     fetchProfiles();
-  }, [JSON.stringify(userIds)]);
+  }, [userIds, userIdsKey]);
 
   return { profiles, loading };
 }

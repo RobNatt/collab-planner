@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, sendEmailVerification, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
@@ -24,13 +24,12 @@ function Dashboard() {
     refreshKey
   );
   const loading = firebaseUser === undefined || (firebaseUser && profileLoading);
-  const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [checklistState, setChecklistState] = useState({
     hasPlan: false,
     hasInvite: false,
     hasChecklist: true,
   });
-  const setupDismissed = useRef(false);
+  const [profileSetupDismissed, setProfileSetupDismissed] = useState(false);
   const { colors } = useTheme();
   const { isLTD, hasUnlimitedAccess } = useLicense(firebaseUser?.uid);
 
@@ -50,8 +49,7 @@ function Dashboard() {
   };
 
   const handleProfileComplete = () => {
-    setupDismissed.current = true;
-    setShowProfileSetup(false);
+    setProfileSetupDismissed(true);
     setRefreshKey(prev => prev + 1);
   };
 
@@ -68,16 +66,7 @@ function Dashboard() {
     }
   }, [firebaseUser, navigate]);
 
-  useEffect(() => {
-    if (firebaseUser === undefined || loading) return;
-    if (profile) {
-      setShowProfileSetup(false);
-      return;
-    }
-    if (!showProfileSetup && !setupDismissed.current) {
-      setShowProfileSetup(true);
-    }
-  }, [firebaseUser, loading, profile, showProfileSetup]);
+  const showProfileSetup = firebaseUser !== undefined && !loading && !profile && !profileSetupDismissed;
 
   useEffect(() => {
     if (!firebaseUser) return;

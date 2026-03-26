@@ -18,11 +18,6 @@ const formatIcalDate = (dateStr) => {
   return dateStr.replace(/-/g, '');
 };
 
-// Format date as iCal datetime string (YYYYMMDDTHHMMSSZ)
-const formatIcalDateTime = (dateStr, time = '090000') => {
-  return `${dateStr.replace(/-/g, '')}T${time}`;
-};
-
 // Generate unique ID for events
 const generateUID = () => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}@collabplanner`;
