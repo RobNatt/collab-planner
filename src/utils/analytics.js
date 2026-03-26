@@ -46,6 +46,32 @@ export function trackCollaboratorInvited(planId, expirationMs, maxUses) {
   });
 }
 
+/**
+ * Fire when collaborator accepts invite and enters join flow.
+ */
+export function trackInviteAccepted(planId, mode = 'pending_payment') {
+  trackEvent('invite_accepted', {
+    plan_id: planId,
+    join_mode: mode,
+  });
+}
+
+/**
+ * Fire when admin completes collaborator approval payment.
+ */
+export function trackAdminCollaboratorPaymentCompleted(requestId, planId) {
+  trackEvent('admin_collaborator_payment_completed', {
+    request_id: requestId,
+    plan_id: planId,
+  });
+}
+
+export function trackAdminCollaboratorPaymentStarted(requestId) {
+  trackEvent('admin_collaborator_payment_started', {
+    request_id: requestId,
+  });
+}
+
 // ─── Revenue ─────────────────────────────────────────────────────────────────
 
 /**

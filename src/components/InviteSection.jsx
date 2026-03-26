@@ -3,7 +3,7 @@ import { doc, updateDoc, getDoc, setDoc, deleteDoc, collection, query, where, on
 import { httpsCallable } from 'firebase/functions';
 import { db, auth, functions } from '../config/firebase';
 import { billingKindFromLicensePlan } from '../utils/inviteBilling';
-import { trackCollaboratorInvited } from '../utils/analytics';
+import { trackCollaboratorInvited, trackAdminCollaboratorPaymentStarted } from '../utils/analytics';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTheme } from '../contexts/ThemeContext';
 import toast from 'react-hot-toast';
@@ -198,6 +198,7 @@ function InviteSection({ plan }) {
         requestId,
         appBaseUrl: window.location.origin,
       });
+      trackAdminCollaboratorPaymentStarted(requestId);
       const url = result?.data?.url;
       if (!url) throw new Error('Stripe checkout URL missing.');
       window.location.href = url;

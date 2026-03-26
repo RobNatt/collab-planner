@@ -16,6 +16,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Skeleton, SkeletonText } from '../components/Skeleton';
 import { logMemberJoined } from '../utils/activityLogger';
+import { trackInviteAccepted } from '../utils/analytics';
 import { AUTO_JOIN_KEY } from './InviteLanding';
 import toast from 'react-hot-toast';
 
@@ -147,6 +148,7 @@ function JoinPlan() {
 
       if (mode === 'joined') {
         toast.success(`Successfully joined "${plan.name}"!`);
+        trackInviteAccepted(targetPlanId, 'joined');
         await finishJoinRouting(targetPlanId);
         return;
       }
@@ -156,6 +158,7 @@ function JoinPlan() {
         if (!requestId) {
           throw new Error('Join request was created without a request ID.');
         }
+        trackInviteAccepted(targetPlanId, 'pending_payment');
         toast.success('Request sent. Waiting for admin payment approval.');
         navigate(`/join/wait/${requestId}`);
         return;

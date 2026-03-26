@@ -177,6 +177,28 @@ function Landing() {
               Start Planning for Free
             </button>
             <button
+              onClick={() => navigate('/demo')}
+              style={{
+                padding: '16px 28px',
+                fontSize: '18px',
+                backgroundColor: colors.success,
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontWeight: '700',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Try Demo Trip
+            </button>
+            <button
               onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
               style={{
                 padding: '16px 40px',
@@ -198,6 +220,21 @@ function Landing() {
             >
               See Features
             </button>
+          </div>
+
+          <div style={{
+            marginTop: '18px',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '16px',
+            flexWrap: 'wrap',
+            color: colors.textSecondary,
+            fontSize: '13px',
+            fontWeight: '600',
+          }}>
+            <span>Realtime collaboration</span>
+            <span>Role-based permissions</span>
+            <span>Stripe-secure payments</span>
           </div>
         </div>
 
@@ -918,6 +955,29 @@ function Landing() {
           }}>
             Join travel groups who use Collab Planner to organize trips, manage itineraries, and split expenses — all in one place.
           </p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '12px',
+            marginBottom: '28px',
+          }}>
+            {[
+              { role: 'Trip Lead', quote: 'Finally one place for tasks, dates, and money.' },
+              { role: 'Family Organizer', quote: 'Everyone can follow the plan without constant texts.' },
+              { role: 'Ops Manager', quote: 'Team offsites are easier when ownership is visible.' },
+            ].map((t) => (
+              <div key={t.role} style={{
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.25)',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                textAlign: 'left',
+              }}>
+                <div style={{ color: 'white', fontSize: '12px', fontWeight: '700', marginBottom: '4px' }}>{t.role}</div>
+                <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '13px' }}>"{t.quote}"</div>
+              </div>
+            ))}
+          </div>
           <button
             onClick={() => navigate('/login?signup=true')}
             style={{

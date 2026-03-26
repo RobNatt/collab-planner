@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnalyticsTracker } from './components/AnalyticsTracker';
 
 const Landing = lazy(() => import('./pages/Landing'));
+const DemoTrip = lazy(() => import('./pages/DemoTrip'));
 const Login = lazy(() => import('./pages/Login'));
 const Welcome = lazy(() => import('./pages/Welcome'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -31,6 +32,7 @@ function App() {
         <AnalyticsTracker />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/demo" element={<DemoTrip />} />
           <Route path="/login" element={<Login />} />
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/dashboard" element={<Dashboard />} />

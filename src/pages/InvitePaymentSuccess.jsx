@@ -4,6 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { auth, functions } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { trackAdminCollaboratorPaymentCompleted } from '../utils/analytics';
 import toast from 'react-hot-toast';
 
 function InvitePaymentSuccess() {
@@ -31,6 +32,7 @@ function InvitePaymentSuccess() {
         const finalize = httpsCallable(functions, 'finalizeCollaboratorJoinAfterCheckout');
         const res = await finalize({ requestId, sessionId });
         const planId = res?.data?.planId;
+        trackAdminCollaboratorPaymentCompleted(requestId, planId || 'unknown');
         toast.success('Collaborator payment accepted.');
         if (planId) {
           navigate(`/plan/${planId}`);

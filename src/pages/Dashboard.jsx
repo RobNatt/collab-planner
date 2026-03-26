@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, sendEmailVerification, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import CreatePlan from '../components/CreatePlan';
 import PlansList from '../components/PlansList';
@@ -25,6 +25,11 @@ function Dashboard() {
   );
   const loading = firebaseUser === undefined || (firebaseUser && profileLoading);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [checklistState, setChecklistState] = useState({
+    hasPlan: false,
+    hasInvite: false,
+    hasChecklist: true,
+  });
   const setupDismissed = useRef(false);
   const { colors } = useTheme();
   const { isLTD, hasUnlimitedAccess } = useLicense(firebaseUser?.uid);
@@ -73,6 +78,28 @@ function Dashboard() {
       setShowProfileSetup(true);
     }
   }, [firebaseUser, loading, profile, showProfileSetup]);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const run = async () => {
+      try {
+        const plansSnap = await getDocs(
+          query(collection(db, 'plans'), where('members', 'array-contains', firebaseUser.uid), limit(10))
+        );
+        const plans = plansSnap.docs.map((d) => d.data());
+        const hasPlan = plans.length > 0;
+        const hasInvite = plans.some((p) => p.admin === firebaseUser.uid && !!p.inviteCode);
+        setChecklistState({
+          hasPlan,
+          hasInvite,
+          hasChecklist: !(hasPlan && hasInvite),
+        });
+      } catch {
+        // ignore checklist load errors
+      }
+    };
+    run();
+  }, [firebaseUser, refreshKey]);
 
   useEffect(() => {
     if (firebaseUser === undefined || loading) return;
@@ -242,6 +269,27 @@ function Dashboard() {
               >
                 View plans
               </button>
+            </div>
+          )}
+          {checklistState.hasChecklist && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: `${colors.success}10`,
+              border: `1px solid ${colors.success}33`,
+              borderRadius: '8px',
+              marginBottom: '20px',
+            }}>
+              <div style={{ color: colors.text, fontWeight: '700', marginBottom: '8px' }}>
+                Launch checklist
+              </div>
+              <div style={{ marginBottom: '8px', color: colors.textMuted, fontSize: '13px' }}>
+                {`${(checklistState.hasPlan ? 1 : 0) + (checklistState.hasInvite ? 1 : 0)}/3 complete`}
+              </div>
+              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', color: colors.textSecondary, fontSize: '14px' }}>
+                <span>{checklistState.hasPlan ? '✓' : '○'} Create your first plan</span>
+                <span>{checklistState.hasInvite ? '✓' : '○'} Generate an invite link</span>
+                <span>○ Add your first task/activity</span>
+              </div>
             </div>
           )}
           <div style={{
