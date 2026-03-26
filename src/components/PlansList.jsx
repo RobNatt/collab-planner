@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, updateDoc, doc, FieldValue } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { useUserProfiles } from '../hooks/useUserProfile';
 import { getUserDisplayName } from '../utils/userHelpers';
@@ -56,6 +56,11 @@ function PlansList() {
       };
 
       const docRef = await addDoc(collection(db, 'plans'), newPlan);
+      try {
+        await updateDoc(doc(db, 'userProfiles', auth.currentUser.uid), {
+          restrictDashboardToPlanId: FieldValue.delete(),
+        });
+      } catch { /* no profile doc */ }
       toast.success('Plan duplicated!');
       navigate(`/plan/${docRef.id}`);
     } catch (error) {

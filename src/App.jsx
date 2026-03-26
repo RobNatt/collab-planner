@@ -8,6 +8,9 @@ const Welcome = lazy(() => import('./pages/Welcome'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const PlanDetails = lazy(() => import('./pages/PlanDetails'));
 const JoinPlan = lazy(() => import('./pages/JoinPlan'));
+const JoinWait = lazy(() => import('./pages/JoinWait'));
+const InviteLanding = lazy(() => import('./pages/InviteLanding'));
+const InvitePaymentSuccess = lazy(() => import('./pages/InvitePaymentSuccess'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const LTD = lazy(() => import('./pages/LTD'));
@@ -43,7 +46,10 @@ function App() {
           <Route path="/affiliates" element={<Affiliates />} />
           <Route path="/affiliate-dashboard" element={<AffiliateDashboard />} />
           <Route path="/plan/:planId" element={<PlanDetails />} />
+          <Route path="/invite/:inviteCode" element={<InviteLanding />} />
           <Route path="/join/:inviteCode" element={<JoinPlan />} />
+          <Route path="/join/wait/:requestId" element={<JoinWait />} />
+          <Route path="/invite-payment/success" element={<InvitePaymentSuccess />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

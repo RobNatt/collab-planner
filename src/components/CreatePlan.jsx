@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, FieldValue } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
 import { trackTripCreated } from '../utils/analytics';
 import { useTheme } from '../contexts/ThemeContext';
@@ -56,6 +56,13 @@ function CreatePlan({ onPlanCreated }) {
       };
 
       await addDoc(collection(db, 'plans'), planData);
+      try {
+        await updateDoc(doc(db, 'userProfiles', auth.currentUser.uid), {
+          restrictDashboardToPlanId: FieldValue.delete(),
+        });
+      } catch {
+        /* profile doc may not exist yet */
+      }
       const durationDays = startDate && endDate
         ? Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))
         : 0;

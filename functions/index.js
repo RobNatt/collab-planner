@@ -202,6 +202,391 @@ exports.chargeCollaboratorJoin = functions.https.onCall(async (data, context) =>
   }
 });
 
+function getAppBaseUrl() {
+  return (
+    process.env.APP_BASE_URL ||
+    functions.config().app?.url ||
+    'http://localhost:5173'
+  );
+}
+
+function normalizeInviteCode(code) {
+  return String(code || '').trim().toUpperCase();
+}
+
+function isBusinessPlan(plan) {
+  return plan === 'business_monthly' || plan === 'business_annual';
+}
+
+async function getPlanByInviteCode(inviteCode) {
+  const code = normalizeInviteCode(inviteCode);
+  const snap = await admin
+    .firestore()
+    .collection('plans')
+    .where('inviteCode', '==', code)
+    .limit(1)
+    .get();
+  if (snap.empty) return null;
+  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+}
+
+async function addCollaboratorToPlan({ plan, collaboratorUid }) {
+  await admin.firestore().runTransaction(async (tx) => {
+    const planRef = admin.firestore().doc(`plans/${plan.id}`);
+    const planSnap = await tx.get(planRef);
+    if (!planSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'Plan no longer exists.');
+    }
+    const latest = planSnap.data();
+    if (Array.isArray(latest.members) && latest.members.includes(collaboratorUid)) {
+      return;
+    }
+    tx.update(planRef, {
+      members: admin.firestore.FieldValue.arrayUnion(collaboratorUid),
+      inviteUseCount: admin.firestore.FieldValue.increment(1),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+}
+
+/**
+ * Create a collaborator join request.
+ * Individual plans => pending admin payment gate.
+ * Business plans => direct join (no immediate charge gate).
+ */
+exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const inviteCode = normalizeInviteCode(data?.inviteCode);
+  if (!inviteCode) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing inviteCode');
+  }
+
+  const collaboratorUid = context.auth.uid;
+  const collaboratorEmail = context.auth.token.email || null;
+  const plan = await getPlanByInviteCode(inviteCode);
+  if (!plan) {
+    throw new functions.https.HttpsError('not-found', 'Invalid invite code');
+  }
+
+  if (Array.isArray(plan.members) && plan.members.includes(collaboratorUid)) {
+    return { mode: 'already_member', planId: plan.id };
+  }
+
+  if (plan.inviteExpiresAt) {
+    const expiresAt = plan.inviteExpiresAt.toDate
+      ? plan.inviteExpiresAt.toDate()
+      : new Date(plan.inviteExpiresAt);
+    if (new Date() > expiresAt) {
+      throw new functions.https.HttpsError('failed-precondition', 'This invite has expired.');
+    }
+  }
+  if (plan.inviteMaxUses && plan.inviteMaxUses > 0) {
+    if ((plan.inviteUseCount || 0) >= plan.inviteMaxUses) {
+      throw new functions.https.HttpsError('failed-precondition', 'This invite has reached max uses.');
+    }
+  }
+
+  const adminUid = plan.admin || plan.createdBy;
+  if (!adminUid) {
+    throw new functions.https.HttpsError('failed-precondition', 'Plan admin missing');
+  }
+
+  const licSnap = await admin.firestore().doc(`licenses/${adminUid}`).get();
+  const lic = licSnap.data() || null;
+  const adminPlan = lic?.plan || (lic?.status === 'active' ? 'ltd' : 'free');
+  const business = isBusinessPlan(adminPlan);
+
+  if (business) {
+    await addCollaboratorToPlan({ plan, collaboratorUid });
+    await admin.firestore().collection('notifications').add({
+      userId: adminUid,
+      type: 'collaborator_joined_business',
+      message: `${collaboratorEmail || 'A collaborator'} joined ${plan.name || 'your plan'}.`,
+      planId: plan.id,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { mode: 'joined', planId: plan.id };
+  }
+
+  const existing = await admin
+    .firestore()
+    .collection('collaboratorJoinRequests')
+    .where('planId', '==', plan.id)
+    .where('collaboratorUid', '==', collaboratorUid)
+    .where('status', '==', 'pending_admin_payment')
+    .limit(1)
+    .get();
+  if (!existing.empty) {
+    return {
+      mode: 'pending_payment',
+      requestId: existing.docs[0].id,
+      planId: plan.id,
+      adminUid,
+    };
+  }
+
+  const reqRef = admin.firestore().collection('collaboratorJoinRequests').doc();
+  await reqRef.set({
+    planId: plan.id,
+    inviteCode,
+    adminUid,
+    adminEmail: plan.createdByEmail || null,
+    collaboratorUid,
+    collaboratorEmail,
+    collaboratorName: data?.collaboratorName || null,
+    status: 'pending_admin_payment',
+    amountCents: 100,
+    billingKind: 'individual',
+    licensePlan: adminPlan,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await admin.firestore().collection('notifications').add({
+    userId: adminUid,
+    type: 'collaborator_payment_approval_required',
+    message: `${collaboratorEmail || 'A collaborator'} is waiting to join ${plan.name || 'your plan'}.`,
+    planId: plan.id,
+    requestId: reqRef.id,
+    read: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { mode: 'pending_payment', requestId: reqRef.id, planId: plan.id, adminUid };
+});
+
+/**
+ * Admin approves collaborator by launching Stripe Checkout.
+ */
+exports.createCollaboratorJoinCheckout = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  }
+  if (!stripe) {
+    throw new functions.https.HttpsError('failed-precondition', 'Payment system not configured.');
+  }
+
+  const requestId = String(data?.requestId || '').trim();
+  if (!requestId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing requestId');
+  }
+
+  const requestRef = admin.firestore().doc(`collaboratorJoinRequests/${requestId}`);
+  const reqSnap = await requestRef.get();
+  if (!reqSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Request not found');
+  }
+  const request = reqSnap.data();
+  if (request.adminUid !== context.auth.uid) {
+    throw new functions.https.HttpsError('permission-denied', 'Only plan admin can approve payment');
+  }
+  if (request.status !== 'pending_admin_payment') {
+    throw new functions.https.HttpsError('failed-precondition', 'Request is no longer pending');
+  }
+
+  const planSnap = await admin.firestore().doc(`plans/${request.planId}`).get();
+  if (!planSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Plan not found');
+  }
+  const plan = planSnap.data();
+
+  const licSnap = await admin.firestore().doc(`licenses/${request.adminUid}`).get();
+  const lic = licSnap.data() || {};
+  const planType = lic.plan || (lic.status === 'active' ? 'ltd' : 'free');
+  if (isBusinessPlan(planType)) {
+    throw new functions.https.HttpsError('failed-precondition', 'Business plans do not require immediate collaborator checkout');
+  }
+  if (!lic.plan && lic.status !== 'active') {
+    throw new functions.https.HttpsError('failed-precondition', 'Admin must purchase a paid plan before approving collaborators.');
+  }
+
+  const appBase = getAppBaseUrl().replace(/\/$/, '');
+  const successUrl = `${appBase}/invite-payment/success?requestId=${encodeURIComponent(requestId)}&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${appBase}/plan/${request.planId}`;
+  const amountCents = Number(request.amountCents || 100);
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    customer: lic.stripeCustomerId || undefined,
+    customer_email: context.auth.token.email || undefined,
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: 'usd',
+          unit_amount: amountCents,
+          product_data: {
+            name: 'Collaborator approval',
+            description: `${request.collaboratorEmail || 'Collaborator'} joining ${plan.name || 'your plan'}`,
+          },
+        },
+      },
+    ],
+    metadata: {
+      type: 'collaborator_join_request',
+      requestId,
+      planId: request.planId,
+      adminUid: request.adminUid,
+      collaboratorUid: request.collaboratorUid,
+    },
+  });
+
+  await requestRef.set(
+    {
+      stripeCheckoutSessionId: session.id,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return { success: true, url: session.url, sessionId: session.id };
+});
+
+/**
+ * Finalize collaborator join after admin pays in Checkout.
+ */
+exports.finalizeCollaboratorJoinAfterCheckout = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  }
+  if (!stripe) {
+    throw new functions.https.HttpsError('failed-precondition', 'Payment system not configured.');
+  }
+
+  const requestId = String(data?.requestId || '').trim();
+  const sessionId = String(data?.sessionId || '').trim();
+  if (!requestId || !sessionId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing requestId or sessionId');
+  }
+
+  const requestRef = admin.firestore().doc(`collaboratorJoinRequests/${requestId}`);
+  const reqSnap = await requestRef.get();
+  if (!reqSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Request not found');
+  }
+  const request = reqSnap.data();
+  const caller = context.auth.uid;
+  if (caller !== request.adminUid && caller !== request.collaboratorUid) {
+    throw new functions.https.HttpsError('permission-denied', 'Not allowed');
+  }
+  if (request.status === 'paid') {
+    return { success: true, status: 'paid', planId: request.planId };
+  }
+  if (request.status !== 'pending_admin_payment') {
+    throw new functions.https.HttpsError('failed-precondition', `Request status is ${request.status}`);
+  }
+  if (request.stripeCheckoutSessionId && request.stripeCheckoutSessionId !== sessionId) {
+    throw new functions.https.HttpsError('failed-precondition', 'Session mismatch');
+  }
+
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  if (session.payment_status !== 'paid') {
+    throw new functions.https.HttpsError('failed-precondition', 'Payment has not completed yet');
+  }
+
+  const planRef = admin.firestore().doc(`plans/${request.planId}`);
+  await admin.firestore().runTransaction(async (tx) => {
+    const reqFresh = await tx.get(requestRef);
+    if (!reqFresh.exists) {
+      throw new functions.https.HttpsError('not-found', 'Request not found');
+    }
+    const reqData = reqFresh.data();
+    if (reqData.status === 'paid') return;
+    if (reqData.status !== 'pending_admin_payment') {
+      throw new functions.https.HttpsError('failed-precondition', 'Request no longer pending');
+    }
+
+    const planSnap = await tx.get(planRef);
+    if (!planSnap.exists) {
+      throw new functions.https.HttpsError('not-found', 'Plan not found');
+    }
+    const planData = planSnap.data();
+
+    if (!Array.isArray(planData.members) || !planData.members.includes(reqData.collaboratorUid)) {
+      tx.update(planRef, {
+        members: admin.firestore.FieldValue.arrayUnion(reqData.collaboratorUid),
+        inviteUseCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    tx.update(requestRef, {
+      status: 'paid',
+      paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      stripeCheckoutSessionId: sessionId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  await admin.firestore().collection('charges').add({
+    planOwnerId: request.adminUid,
+    planId: request.planId,
+    type: 'collaborator_join_checkout',
+    amountCents: Number(request.amountCents || 100),
+    collaboratorId: request.collaboratorUid,
+    collaboratorName: request.collaboratorName || request.collaboratorEmail || 'Collaborator',
+    stripeCheckoutSessionId: sessionId,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await admin.firestore().collection('notifications').add({
+    userId: request.collaboratorUid,
+    type: 'collaborator_join_approved',
+    message: 'Your join request was approved and paid by the plan admin.',
+    planId: request.planId,
+    read: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, status: 'paid', planId: request.planId };
+});
+
+exports.rejectCollaboratorJoinRequest = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  }
+  const requestId = String(data?.requestId || '').trim();
+  if (!requestId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing requestId');
+  }
+
+  const requestRef = admin.firestore().doc(`collaboratorJoinRequests/${requestId}`);
+  const reqSnap = await requestRef.get();
+  if (!reqSnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Request not found');
+  }
+  const request = reqSnap.data();
+  if (request.adminUid !== context.auth.uid) {
+    throw new functions.https.HttpsError('permission-denied', 'Only plan admin can reject');
+  }
+  if (request.status !== 'pending_admin_payment') {
+    return { success: true, status: request.status };
+  }
+
+  await requestRef.update({
+    status: 'rejected',
+    rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await admin.firestore().collection('notifications').add({
+    userId: request.collaboratorUid,
+    type: 'collaborator_join_rejected',
+    message: 'Your collaborator join request was declined by the plan admin.',
+    planId: request.planId,
+    read: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, status: 'rejected' };
+});
+
 /**
  * Save Stripe Customer and PaymentMethod to user's license (pay-per-trip).
  * Called after Stripe SetupIntent succeeds on frontend.

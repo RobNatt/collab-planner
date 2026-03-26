@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, FieldValue } from 'firebase/firestore';
 import { functions, db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { trackTripCreated } from '../utils/analytics';
@@ -44,6 +44,11 @@ export function ConfirmTripModal({ tripData, onClose, onSuccess }) {
       };
 
       await addDoc(collection(db, 'plans'), planData);
+      try {
+        await updateDoc(doc(db, 'userProfiles', auth.currentUser.uid), {
+          restrictDashboardToPlanId: FieldValue.delete(),
+        });
+      } catch { /* no profile doc */ }
       const durationDays = startDate && endDate
         ? Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))
         : 0;

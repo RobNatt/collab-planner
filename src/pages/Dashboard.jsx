@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, sendEmailVerification, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 import CreatePlan from '../components/CreatePlan';
 import PlansList from '../components/PlansList';
 import UserProfileSetup from '../components/UserProfileSetup';
@@ -72,6 +73,21 @@ function Dashboard() {
       setShowProfileSetup(true);
     }
   }, [firebaseUser, loading, profile, showProfileSetup]);
+
+  useEffect(() => {
+    if (firebaseUser === undefined || loading) return;
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, 'userProfiles', firebaseUser.uid));
+        const rid = snap.data()?.restrictDashboardToPlanId;
+        if (rid) {
+          navigate(`/plan/${rid}`, { replace: true });
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, [firebaseUser, loading, navigate]);
 
   if (firebaseUser === null) {
     return null;

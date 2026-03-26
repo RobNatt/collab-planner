@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db, auth } from '../config/firebase';
+import { doc, updateDoc, getDoc, setDoc, deleteDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, auth, functions } from '../config/firebase';
+import { billingKindFromLicensePlan } from '../utils/inviteBilling';
 import { trackCollaboratorInvited } from '../utils/analytics';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -27,6 +29,9 @@ function InviteSection({ plan }) {
   const [expiration, setExpiration] = useState(7 * 24 * 60 * 60 * 1000); // 7 days default
   const [maxUses, setMaxUses] = useState(0); // unlimited default
   const [showSettings, setShowSettings] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [actingRequestId, setActingRequestId] = useState('');
   const { colors } = useTheme();
 
   useEffect(() => {
@@ -96,7 +101,42 @@ function InviteSection({ plan }) {
       // Set max uses
       updateData.inviteMaxUses = maxUses;
 
+      if (plan.inviteCode) {
+        await deleteDoc(doc(db, 'inviteLinks', plan.inviteCode)).catch(() => {});
+      }
+
+      const adminId = plan.admin;
+      let hostDisplayName = plan.createdByEmail?.split('@')[0] || 'The organizer';
+      let billingKind = 'free';
+      try {
+        const profSnap = await getDoc(doc(db, 'users', adminId));
+        if (profSnap.exists() && profSnap.data().displayName?.trim()) {
+          hostDisplayName = profSnap.data().displayName.trim();
+        }
+      } catch (_) { /* keep fallback name */ }
+      try {
+        const licSnap = await getDoc(doc(db, 'licenses', adminId));
+        const lic = licSnap.data();
+        const licensePlan = lic?.plan || (lic?.status === 'active' ? 'ltd' : null);
+        billingKind = billingKindFromLicensePlan(licensePlan);
+      } catch (_) { /* free */ }
+
       await updateDoc(doc(db, 'plans', plan.id), updateData);
+
+      try {
+        await setDoc(doc(db, 'inviteLinks', code), {
+          planId: plan.id,
+          planName: plan.name || 'Trip plan',
+          hostDisplayName,
+          planAdminUid: adminId,
+          billingKind,
+          inviteExpiresAt: updateData.inviteExpiresAt ?? null,
+          inviteMaxUses: maxUses,
+          updatedAt: new Date(),
+        });
+      } catch (linkErr) {
+        console.error('inviteLinks write:', linkErr);
+      }
 
       setInviteCode(code);
       trackCollaboratorInvited(plan.id, expiration, maxUses);
@@ -108,7 +148,7 @@ function InviteSection({ plan }) {
   };
 
   const copyInviteLink = () => {
-    const inviteLink = `${window.location.origin}/join/${inviteCode}`;
+    const inviteLink = `${window.location.origin}/invite/${inviteCode}`;
     navigator.clipboard.writeText(inviteLink).catch(() => {
       const textArea = document.createElement('textarea');
       textArea.value = inviteLink;
@@ -123,6 +163,58 @@ function InviteSection({ plan }) {
   };
 
   const isAdmin = plan.admin === auth.currentUser.uid;
+
+  useEffect(() => {
+    if (!isAdmin || !plan?.id) return undefined;
+    setLoadingRequests(true);
+    const q = query(
+      collection(db, 'collaboratorJoinRequests'),
+      where('planId', '==', plan.id),
+      where('status', '==', 'pending_admin_payment')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const ta = a.createdAt?.seconds || 0;
+          const tb = b.createdAt?.seconds || 0;
+          return tb - ta;
+        });
+      setPendingRequests(rows);
+      setLoadingRequests(false);
+    }, () => setLoadingRequests(false));
+    return () => unsub();
+  }, [isAdmin, plan?.id]);
+
+  const handleApproveAndPay = async (requestId) => {
+    setActingRequestId(requestId);
+    try {
+      const createCheckout = httpsCallable(functions, 'createCollaboratorJoinCheckout');
+      const result = await createCheckout({ requestId });
+      const url = result?.data?.url;
+      if (!url) throw new Error('Stripe checkout URL missing.');
+      window.location.href = url;
+    } catch (error) {
+      console.error('createCollaboratorJoinCheckout:', error);
+      toast.error(error.message || 'Could not start collaborator checkout.');
+    } finally {
+      setActingRequestId('');
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    setActingRequestId(requestId);
+    try {
+      const reject = httpsCallable(functions, 'rejectCollaboratorJoinRequest');
+      await reject({ requestId });
+      toast.success('Collaborator request rejected.');
+    } catch (error) {
+      console.error('rejectCollaboratorJoinRequest:', error);
+      toast.error(error.message || 'Could not reject request.');
+    } finally {
+      setActingRequestId('');
+    }
+  };
 
   // Non-admin view
   if (!isAdmin) {
@@ -148,7 +240,7 @@ function InviteSection({ plan }) {
             fontSize: '13px',
             wordBreak: 'break-all',
           }}>
-            {window.location.origin}/join/{inviteCode}
+            {window.location.origin}/invite/{inviteCode}
           </code>
           <button
             onClick={copyInviteLink}
@@ -337,7 +429,7 @@ function InviteSection({ plan }) {
               fontSize: '13px',
               wordBreak: 'break-all',
             }}>
-              {window.location.origin}/join/{inviteCode}
+              {window.location.origin}/invite/{inviteCode}
             </code>
             <button
               onClick={copyInviteLink}
@@ -493,7 +585,7 @@ function InviteSection({ plan }) {
               border: `1px solid ${colors.border}`,
             }}>
               <QRCodeSVG
-                value={`${window.location.origin}/join/${inviteCode}`}
+                value={`${window.location.origin}/invite/${inviteCode}`}
                 size={200}
                 level="H"
                 includeMargin={true}
@@ -503,6 +595,91 @@ function InviteSection({ plan }) {
               </p>
             </div>
           )}
+
+          {/* Pending collaborator payments */}
+          <div style={{
+            marginTop: '18px',
+            padding: '16px',
+            borderRadius: '10px',
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.cardBg,
+          }}>
+            <h4 style={{ margin: '0 0 10px 0', color: colors.text }}>
+              Pending collaborator approvals
+            </h4>
+            {loadingRequests ? (
+              <p style={{ margin: 0, color: colors.textMuted, fontSize: '13px' }}>
+                Checking pending requests...
+              </p>
+            ) : pendingRequests.length === 0 ? (
+              <p style={{ margin: 0, color: colors.textMuted, fontSize: '13px' }}>
+                No pending collaborator payment approvals.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {pendingRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    style={{
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      display: 'flex',
+                      gap: '8px',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{ minWidth: '180px' }}>
+                      <div style={{ color: colors.text, fontSize: '14px', fontWeight: '600' }}>
+                        {req.collaboratorName || req.collaboratorEmail || 'Collaborator'}
+                      </div>
+                      <div style={{ color: colors.textMuted, fontSize: '12px' }}>
+                        Requested access. Fee: ${(Number(req.amountCents || 100) / 100).toFixed(2)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleApproveAndPay(req.id)}
+                        disabled={actingRequestId === req.id}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: colors.success,
+                          color: 'white',
+                          cursor: actingRequestId === req.id ? 'not-allowed' : 'pointer',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        {actingRequestId === req.id ? 'Opening...' : `Accept payment for ${req.collaboratorName || 'collaborator'}?`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRejectRequest(req.id)}
+                        disabled={actingRequestId === req.id}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          border: `1px solid ${colors.border}`,
+                          backgroundColor: 'transparent',
+                          color: colors.textSecondary,
+                          cursor: actingRequestId === req.id ? 'not-allowed' : 'pointer',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

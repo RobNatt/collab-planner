@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { doc, setDoc } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
@@ -22,6 +22,10 @@ function Welcome() {
     AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
   );
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isCollaborator = searchParams.get('collaborator') === '1';
+  const collaboratorPlanId = searchParams.get('plan') || '';
+  const [collabPlanName, setCollabPlanName] = useState('');
   const { colors } = useTheme();
 
   // Check authentication state
@@ -38,7 +42,23 @@ function Welcome() {
     return () => unsubscribe();
   }, [navigate]);
 
-  const tutorialSteps = [
+  useEffect(() => {
+    if (!isCollaborator || !collaboratorPlanId || !user) return;
+    getDoc(doc(db, 'plans', collaboratorPlanId))
+      .then((s) => {
+        if (s.exists()) setCollabPlanName(s.data().name || 'this trip');
+      })
+      .catch(() => setCollabPlanName('this trip'));
+  }, [isCollaborator, collaboratorPlanId, user]);
+
+  useEffect(() => {
+    if (checkingAuth || !user) return;
+    if (isCollaborator && !collaboratorPlanId) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [checkingAuth, user, isCollaborator, collaboratorPlanId, navigate]);
+
+  const ownerTutorialSteps = useMemo(() => [
     {
       icon: '👋',
       title: 'Welcome to Collab Planner!',
@@ -88,7 +108,47 @@ function Welcome() {
       tip: "You can update your profile anytime from the dashboard.",
       isProfileStep: true,
     },
-  ];
+  ], []);
+
+  const collaboratorTutorialSteps = useMemo(() => [
+    {
+      icon: '✈️',
+      title: 'Welcome, collaborator!',
+      description: `You're joining "${collabPlanName || 'this trip'}" as a guest planner. You'll use tasks, activities, expenses, and votes alongside the group. The trip admin manages invites and billing.`,
+      tip: 'Everything updates live — no more hunting through group chats.',
+    },
+    {
+      icon: '✅',
+      title: 'Tasks & activities',
+      description: 'Complete tasks you are assigned and follow the itinerary. Scheduled items show on the calendar.',
+      tip: 'Ask an admin if you need something added to the plan.',
+    },
+    {
+      icon: '💰',
+      title: 'Expenses',
+      description: 'Log what you paid and see suggested splits. The app tracks who owes whom.',
+      tip: 'Add receipts and notes so everyone stays aligned.',
+    },
+    {
+      icon: '📅',
+      title: 'Votes & suggestions',
+      description: 'Weigh in when the group votes on dates or ideas. Admins approve what goes on the schedule.',
+      tip: 'Your vote helps the admin lock in the best options.',
+    },
+    {
+      icon: '🚀',
+      title: 'Set up your profile',
+      description: 'Add your name and color so teammates recognize you in the plan.',
+      tip: 'You can change this anytime from your profile.',
+      isProfileStep: true,
+    },
+  ], [collabPlanName]);
+
+  const tutorialSteps = isCollaborator ? collaboratorTutorialSteps : ownerTutorialSteps;
+
+  const afterTutorialHref = isCollaborator && collaboratorPlanId
+    ? `/plan/${collaboratorPlanId}`
+    : '/dashboard';
 
   const handleComplete = async () => {
     if (!user) {
@@ -123,11 +183,11 @@ function Welcome() {
       }, { merge: true });
 
       toast.success('Welcome to Collab Planner!');
-      window.location.href = '/dashboard';
+      window.location.href = afterTutorialHref;
     } catch (error) {
       console.error('Error saving profile:', error);
       toast.error('Setup error, redirecting anyway...');
-      window.location.href = '/dashboard';
+      window.location.href = afterTutorialHref;
     }
   };
 
@@ -157,10 +217,10 @@ function Welcome() {
       }, { merge: true });
 
       toast.success('Welcome to Collab Planner!');
-      window.location.href = '/dashboard';
+      window.location.href = afterTutorialHref;
     } catch (error) {
       console.error('Error saving profile:', error);
-      window.location.href = '/dashboard';
+      window.location.href = afterTutorialHref;
     }
   };
 
@@ -435,7 +495,7 @@ function Welcome() {
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                Start Planning! 🚀
+                {isCollaborator ? 'Open the trip 🚀' : 'Start Planning! 🚀'}
               </button>
             ) : (
               <button

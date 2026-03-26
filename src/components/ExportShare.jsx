@@ -255,7 +255,7 @@ function ExportShare({ plan, activities, expenses }) {
   };
 
   const handleCopyShareLink = async () => {
-    const link = `${window.location.origin}/join/${plan.inviteCode}`;
+    const link = `${window.location.origin}/invite/${plan.inviteCode}`;
     setCopying(true);
     try {
       await navigator.clipboard.writeText(link);
