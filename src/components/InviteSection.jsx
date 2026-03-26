@@ -169,12 +169,12 @@ function InviteSection({ plan }) {
     setLoadingRequests(true);
     const q = query(
       collection(db, 'collaboratorJoinRequests'),
-      where('planId', '==', plan.id)
+      where('adminUid', '==', auth.currentUser.uid)
     );
     const unsub = onSnapshot(q, (snap) => {
       const rows = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((row) => row.status === 'pending_admin_payment')
+        .filter((row) => row.planId === plan.id && row.status === 'pending_admin_payment')
         .sort((a, b) => {
           const ta = a.createdAt?.seconds || 0;
           const tb = b.createdAt?.seconds || 0;
