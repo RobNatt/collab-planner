@@ -169,12 +169,12 @@ function InviteSection({ plan }) {
     setLoadingRequests(true);
     const q = query(
       collection(db, 'collaboratorJoinRequests'),
-      where('planId', '==', plan.id),
-      where('status', '==', 'pending_admin_payment')
+      where('planId', '==', plan.id)
     );
     const unsub = onSnapshot(q, (snap) => {
       const rows = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((row) => row.status === 'pending_admin_payment')
         .sort((a, b) => {
           const ta = a.createdAt?.seconds || 0;
           const tb = b.createdAt?.seconds || 0;
@@ -182,7 +182,11 @@ function InviteSection({ plan }) {
         });
       setPendingRequests(rows);
       setLoadingRequests(false);
-    }, () => setLoadingRequests(false));
+    }, (err) => {
+      console.error('Pending collaborator query error:', err);
+      setLoadingRequests(false);
+      toast.error('Could not load collaborator requests.');
+    });
     return () => unsub();
   }, [isAdmin, plan?.id]);
 
