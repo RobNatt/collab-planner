@@ -1,32 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { updateDoc, doc, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
+import { useUserProfiles } from '../hooks/useUserProfile';
+import { getUserDisplayName } from '../utils/userHelpers';
 
 function MembersList({ plan, onMemberRemoved }) {
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const memberIds = plan?.members || [];
+  const { profiles, loading } = useUserProfiles(memberIds);
 
-  useEffect(() => {
-    fetchMembers();
-  }, [plan.members]);
-
-  const fetchMembers = async () => {
-    try {
-      // For now, we only have user IDs. In a real app, you'd fetch user profiles
-      // For this version, we'll just show the member UIDs and the creator's email
-      const memberList = plan.members.map(memberId => ({
+  const members = useMemo(() => (
+    memberIds.map((memberId) => {
+      const profile = profiles?.[memberId] || {};
+      const displayName = getUserDisplayName(memberId, profiles, auth.currentUser?.uid);
+      const email = profile.email || (memberId === plan.createdBy ? plan.createdByEmail : '');
+      return {
         id: memberId,
-        email: memberId === plan.createdBy ? plan.createdByEmail : 'Member',
-        isAdmin: memberId === plan.admin
-      }));
-      
-      setMembers(memberList);
-    } catch (error) {
-      console.error('Error fetching members:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        displayName,
+        email,
+        isAdmin: memberId === plan.admin,
+      };
+    })
+  ), [memberIds, profiles, plan.admin, plan.createdBy, plan.createdByEmail]);
 
   const handleRemoveMember = async (memberId) => {
     if (memberId === plan.admin) {
@@ -126,10 +120,13 @@ function MembersList({ plan, onMemberRemoved }) {
                 justifyContent: 'center',
                 fontWeight: 'bold'
               }}>
-                {member.email[0].toUpperCase()}
+                {(member.displayName || member.email || 'M')[0].toUpperCase()}
               </div>
               <div>
-                <div style={{ fontWeight: 'bold' }}>{member.email}</div>
+                <div style={{ fontWeight: 'bold' }}>{member.displayName || member.email || 'Member'}</div>
+                {member.email && member.email !== member.displayName && (
+                  <div style={{ fontSize: '12px', color: '#666' }}>{member.email}</div>
+                )}
                 {member.isAdmin && (
                   <span style={{
                     fontSize: '12px',
