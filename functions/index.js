@@ -271,7 +271,13 @@ exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, cont
     throw new functions.https.HttpsError('not-found', 'Invalid invite code');
   }
 
-  if (Array.isArray(plan.members) && plan.members.includes(collaboratorUid)) {
+  const collaboratorAlreadyMember = Array.isArray(plan.members) && plan.members.includes(collaboratorUid);
+  if (collaboratorAlreadyMember) {
+    console.log('createCollaboratorJoinRequest: already-member short-circuit', {
+      planId: plan.id,
+      collaboratorUid,
+      adminUid: plan.admin || plan.createdBy || null,
+    });
     return { mode: 'already_member', planId: plan.id };
   }
 
@@ -297,7 +303,17 @@ exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, cont
   const licSnap = await admin.firestore().doc(`licenses/${adminUid}`).get();
   const lic = licSnap.data() || null;
   const adminPlan = lic?.plan || (lic?.status === 'active' ? 'ltd' : 'free');
+  const explicitBusinessPlan = lic?.plan;
   const business = isBusinessPlan(adminPlan);
+  console.log('createCollaboratorJoinRequest: plan resolution', {
+    planId: plan.id,
+    inviteCode,
+    adminUid,
+    collaboratorUid,
+    adminPlan,
+    explicitBusinessPlan: explicitBusinessPlan || null,
+    business,
+  });
 
   if (business) {
     await addCollaboratorToPlan({ plan, collaboratorUid });
@@ -309,7 +325,7 @@ exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, cont
       read: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    return { mode: 'joined', planId: plan.id };
+    return { mode: 'joined', planId: plan.id, gateReason: 'business_plan' };
   }
 
   const existing = await admin
@@ -326,6 +342,7 @@ exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, cont
       requestId: existing.docs[0].id,
       planId: plan.id,
       adminUid,
+      gateReason: 'existing_pending_request',
     };
   }
 
@@ -356,7 +373,13 @@ exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, cont
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  return { mode: 'pending_payment', requestId: reqRef.id, planId: plan.id, adminUid };
+  return {
+    mode: 'pending_payment',
+    requestId: reqRef.id,
+    planId: plan.id,
+    adminUid,
+    gateReason: 'individual_or_ltd_plan',
+  };
 });
 
 /**
