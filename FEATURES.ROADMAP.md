@@ -148,6 +148,13 @@
 - [x] Member contribution stats
 - [x] Timeline view of activities
 
+### Near-Term Growth (Customer Acquisition)
+- [ ] Add a one-click "Try Demo Trip" experience from landing (no signup required)
+- [ ] Add a trust strip near primary CTAs (realtime sync, role permissions, Stripe-secure billing)
+- [ ] Add 2-3 concise testimonial cards with role context (trip lead, organizer, ops manager)
+- [ ] Add a post-signup checklist on dashboard (create plan, invite collaborator, add activity)
+- [ ] Expand funnel analytics for invite acceptance and admin payment completion
+
 ## 🔮 FUTURE FEATURES (Post-MVP)
 
 ### Advanced Collaboration ✅ COMPLETED
