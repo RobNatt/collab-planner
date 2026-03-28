@@ -222,7 +222,7 @@ function InviteLanding() {
         }}>
           <strong style={{ color: colors.text }}>Billing note:</strong>{' '}
           {legacyInvite
-            ? 'Individual plans usually charge the organizer $1 when a collaborator joins; Business plans include the first 10 collaborators. You will not be charged on your own card for this fee.'
+            ? 'Individual plans bill the organizer for collaborators on a schedule (about 48 hours before the trip); Business plans include the first 10 collaborators on the roster. You will not be charged on your own card for organizer fees.'
             : chargeLine}
         </div>
 

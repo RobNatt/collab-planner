@@ -24,7 +24,7 @@ export function collaboratorChargeSummary(kind) {
     return 'This organizer uses a Business plan: the first 10 collaborators are included. Additional roster spots may add about $2/month for the organizer (not charged to you).';
   }
   if (kind === 'individual') {
-    return 'Their plan typically includes a $1 collaborator fee when you join (charged to the organizer, not to your card).';
+    return 'Their plan bills the organizer for collaborators on a schedule (about 48 hours before the trip), not when you join — so you can collaborate before any usage charge.';
   }
   return 'No collaborator fee applies until the organizer adds a paid plan and payment method.';
 }

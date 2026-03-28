@@ -7,6 +7,7 @@ import { UpgradeModal } from './UpgradeModal';
 import { ConfirmTripModal } from './ConfirmTripModal';
 import { useLicense } from '../hooks/useLicense';
 import { PLAN_TYPES } from '../data/pricingPlans';
+import { getPreTripChargeFields } from '../utils/pricingSchedule';
 import toast from 'react-hot-toast';
 
 function CreatePlan({ onPlanCreated }) {
@@ -18,7 +19,7 @@ function CreatePlan({ onPlanCreated }) {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showConfirmTrip, setShowConfirmTrip] = useState(false);
   const { colors } = useTheme();
-  const { hasUnlimitedAccess, planType } = useLicense(auth.currentUser?.uid);
+  const { hasUnlimitedAccess, planType, isBusiness } = useLicense(auth.currentUser?.uid);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,6 +54,7 @@ function CreatePlan({ onPlanCreated }) {
         members: [auth.currentUser.uid],
         admin: auth.currentUser.uid,
         createdAt: serverTimestamp(),
+        ...getPreTripChargeFields({ planType, isBusiness, startDate }),
       };
 
       await addDoc(collection(db, 'plans'), planData);
@@ -257,6 +259,7 @@ function CreatePlan({ onPlanCreated }) {
       {showConfirmTrip && (
         <ConfirmTripModal
           tripData={{ planName, description, startDate, endDate }}
+          licenseMeta={{ planType, isBusiness }}
           onClose={() => setShowConfirmTrip(false)}
           onSuccess={handleConfirmTripSuccess}
         />

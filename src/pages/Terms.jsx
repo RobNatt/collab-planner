@@ -71,12 +71,12 @@ function Terms() {
         <Section title="4. Payments and Plans">
           {p('Collab Planner offers the following plans:')}
           <ul style={{ paddingLeft: '20px', marginBottom: '12px' }}>
-            <li style={{ marginBottom: '6px' }}><strong>Free / Pay Per Trip:</strong> Sign up free. Pay-per-trip users pay $2 per trip at confirmation plus $1 per collaborator when they join.</li>
-            <li style={{ marginBottom: '6px' }}><strong>Individual Monthly:</strong> $10/month, unlimited plans, $1 per collaborator when they join a trip.</li>
-            <li style={{ marginBottom: '6px' }}><strong>Individual Annual:</strong> $100/year (2 months free), $1 per collaborator when they join a trip.</li>
-            <li style={{ marginBottom: '6px' }}><strong>Business Monthly:</strong> $50/month, first 10 collaborators free, $2/month per additional collaborator.</li>
-            <li style={{ marginBottom: '6px' }}><strong>Business Annual:</strong> $500/year (2 months free), first 10 collaborators free, $2/month per additional collaborator.</li>
-            <li style={{ marginBottom: '6px' }}><strong>Lifetime Deal (LTD):</strong> $49 one-time, $1 per collaborator on all future trips, unlimited access to features.</li>
+            <li style={{ marginBottom: '6px' }}><strong>Free / Pay Per Trip:</strong> Sign up free. Pay-per-trip users are charged $2 per trip plus $1 per collaborator on the plan; that usage charge runs once, about 48 hours before the trip start (not at signup).</li>
+            <li style={{ marginBottom: '6px' }}><strong>Individual Monthly:</strong> $10/month, unlimited plans, $1 per collaborator per trip billed about 48 hours before each trip start.</li>
+            <li style={{ marginBottom: '6px' }}><strong>Individual Annual:</strong> $100/year (2 months free), $1 per collaborator per trip billed about 48 hours before each trip start.</li>
+            <li style={{ marginBottom: '6px' }}><strong>Business Monthly:</strong> $50/month, first 10 collaborators free, $2/month per additional collaborator on the roster.</li>
+            <li style={{ marginBottom: '6px' }}><strong>Business Annual:</strong> $500/year (2 months free), first 10 collaborators free, $2/month per additional collaborator on the roster.</li>
+            <li style={{ marginBottom: '6px' }}><strong>Lifetime Deal (LTD):</strong> $49 one-time, $1 per collaborator per trip (billed about 48 hours before trip start), unlimited access to features.</li>
           </ul>
           {p('All payments are processed securely by Stripe. We do not store your payment card information.')}
           {p('Refund Policy: We offer a 14-day money-back guarantee on paid plan purchases. To request a refund, contact us within 14 days of purchase. No refunds will be issued after this period. Refunds are issued at our sole discretion.')}

@@ -14,6 +14,7 @@ const InviteLanding = lazy(() => import('./pages/InviteLanding'));
 const InvitePaymentSuccess = lazy(() => import('./pages/InvitePaymentSuccess'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Pricing = lazy(() => import('./pages/Pricing'));
+const PlanPage = lazy(() => import('./pages/PlanPage'));
 const LTD = lazy(() => import('./pages/LTD'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const PurchaseSuccess = lazy(() => import('./pages/PurchaseSuccess'));
@@ -38,6 +39,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/plans/:planSlug" element={<PlanPage />} />
           <Route path="/ltd" element={<LTD />} />
           <Route path="/feedback" element={<Feedback />} />
           <Route path="/purchase-success" element={<PurchaseSuccess />} />

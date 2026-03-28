@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, updateDoc, doc, FieldValue } from 'firebase/firestore';
 import { db, auth } from '../config/firebase';
+import { useLicense } from '../hooks/useLicense';
+import { getPreTripChargeFields } from '../utils/pricingSchedule';
 import { useUserProfiles } from '../hooks/useUserProfile';
 import { getUserDisplayName } from '../utils/userHelpers';
 import { useTheme } from '../contexts/ThemeContext';
@@ -16,6 +18,7 @@ function PlansList() {
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const { colors } = useTheme();
+  const { planType, isBusiness } = useLicense(auth.currentUser?.uid);
 
   const adminIds = [...new Set(plans.map(plan => plan.admin).filter(Boolean))];
   const { profiles } = useUserProfiles(adminIds);
@@ -53,6 +56,7 @@ function PlansList() {
         members: [auth.currentUser.uid],
         admin: auth.currentUser.uid,
         createdAt: serverTimestamp(),
+        ...getPreTripChargeFields({ planType, isBusiness, startDate: plan.startDate }),
       };
 
       const docRef = await addDoc(collection(db, 'plans'), newPlan);

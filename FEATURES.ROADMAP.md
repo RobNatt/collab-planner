@@ -60,7 +60,7 @@
 - [x] Join plan via invite code
 - [x] QR code for invite links
 - [x] Redirect flow for unauthenticated users
-- [ ] Email invite functionality (requires email API)
+- [x] Email invite functionality (requires email API)
 - [x] Invite expiration/limits
 
 #### Member Management ✅

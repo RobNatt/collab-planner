@@ -12,194 +12,163 @@ if (stripeSecret) {
   console.warn('STRIPE_SECRET_KEY not set. Set via: firebase functions:config:set stripe.secret="sk_..."');
 }
 
-/**
- * Charge for trip confirmation (pay-per-trip plan).
- * $2 base + $1 per collaborator already on the trip at confirmation.
- * Called when user confirms trip name and dates.
- */
-exports.chargeTripConfirmation = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+function resolveLicensePlan(lic) {
+  if (!lic) return 'free';
+  return lic.plan || (lic.status === 'active' ? 'ltd' : 'free');
+}
+
+function collaboratorCountExcludingAdmin(plan, adminUid) {
+  const members = plan.members || [];
+  return members.filter((uid) => uid !== adminUid).length;
+}
+
+function preTripAmountCents(licensePlan, collaboratorCount) {
+  if (licensePlan === 'pay_per_trip') {
+    return (2 + collaboratorCount) * 100;
   }
-
-  const { planId, tripName, startDate, endDate, collaboratorCount = 0 } = data;
-  if (!planId || !tripName || !startDate || !endDate) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing required fields');
+  if (
+    licensePlan === 'individual_monthly' ||
+    licensePlan === 'individual_annual' ||
+    licensePlan === 'ltd'
+  ) {
+    return collaboratorCount * 100;
   }
-
-  const userId = context.auth.uid;
-
-  // Verify user has pay_per_trip plan
-  const licenseSnap = await admin.firestore().doc(`licenses/${userId}`).get();
-  const license = licenseSnap.data();
-  if (!license || license.plan !== 'pay_per_trip') {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'Pay-per-trip plan required. Add payment method first.'
-    );
-  }
-
-  const stripeCustomerId = license.stripeCustomerId;
-  const paymentMethodId = license.stripePaymentMethodId || license.defaultPaymentMethod;
-  if (!stripeCustomerId || !paymentMethodId) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'No payment method on file. Please add a card in your account settings.'
-    );
-  }
-
-  if (!stripe) {
-    throw new functions.https.HttpsError('failed-precondition', 'Payment system not configured.');
-  }
-
-  // $2 base + $1 per collaborator (creator is not charged as collaborator; collaborators = others)
-  const amountCents = (2 + collaboratorCount) * 100; // 200 + 100*collaboratorCount
-
-  try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: 'usd',
-      customer: stripeCustomerId,
-      payment_method: paymentMethodId,
-      confirm: true,
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        type: 'trip_confirmation',
-        planId,
-        userId,
-        tripName,
-      },
-    });
-
-    if (paymentIntent.status !== 'succeeded') {
-      throw new Error(`Payment not completed: ${paymentIntent.status}`);
-    }
-
-    // Record the charge in Firestore for audit
-    await admin.firestore().collection('charges').add({
-      userId,
-      planId,
-      type: 'trip_confirmation',
-      amountCents,
-      stripePaymentIntentId: paymentIntent.id,
-      tripName,
-      collaboratorCount,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return { success: true, paymentIntentId: paymentIntent.id };
-  } catch (err) {
-    console.error('Stripe charge error:', err);
-    throw new functions.https.HttpsError(
-      'internal',
-      err.message || 'Payment failed. Please try again.'
-    );
-  }
-});
+  return 0;
+}
 
 /**
- * Charge when a collaborator joins a trip.
- * $1 for individual plans (pay_per_trip, monthly, annual, ltd).
- * For business: first 10 free, then handled by subscription metering.
- * Called from JoinPlan after user joins.
+ * Scheduled: charge trip + collaborator usage for plans whose billing window has opened
+ * (48 hours before trip start). Replaces same-day confirmation and per-join charges for individuals.
  */
-exports.chargeCollaboratorJoin = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
-  }
-
-  const { planId, planOwnerId, collaboratorName, planName } = data;
-  if (!planId || !planOwnerId) {
-    throw new functions.https.HttpsError('invalid-argument', 'Missing planId or planOwnerId');
-  }
-
-  // The joiner is context.auth.uid; the plan owner (who gets charged) is planOwnerId
-  const licenseSnap = await admin.firestore().doc(`licenses/${planOwnerId}`).get();
-  const license = licenseSnap.data();
-
-  if (!license) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'Plan owner has no license'
-    );
-  }
-
-  const planType = license.plan;
-
-  // Business plans: first 10 free, $2/mo for extras - that's metered, not one-time.
-  // For now we charge $1 for individual-style plans. Business overages are monthly.
-  if (planType === 'business_monthly' || planType === 'business_annual') {
-    // TODO: Implement Stripe metered billing for business overages
-    // For now, skip charge - business overages handled by subscription
-    return { success: true, charged: false, reason: 'business_plan' };
-  }
-
-  // Individual plans: $1 per collaborator join
-  const stripeCustomerId = license.stripeCustomerId;
-  const paymentMethodId = license.stripePaymentMethodId || license.defaultPaymentMethod;
-
-  if (!stripeCustomerId || !paymentMethodId) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'Plan owner has no payment method. They will be notified to add one.'
-    );
-  }
-
+exports.processPreTripCharges = functions.pubsub.schedule('every 15 minutes').onRun(async () => {
   if (!stripe) {
-    throw new functions.https.HttpsError('failed-precondition', 'Payment system not configured.');
+    console.warn('processPreTripCharges: Stripe not configured');
+    return null;
   }
 
-  const amountCents = 100; // $1
-
+  const db = admin.firestore();
+  const now = admin.firestore.Timestamp.now();
+  let snap;
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: 'usd',
-      customer: stripeCustomerId,
-      payment_method: paymentMethodId,
-      confirm: true,
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        type: 'collaborator_join',
-        planId,
-        planOwnerId,
-        collaboratorId: context.auth.uid,
-      },
-    });
-
-    if (paymentIntent.status !== 'succeeded') {
-      throw new Error(`Payment not completed: ${paymentIntent.status}`);
-    }
-
-    await admin.firestore().collection('charges').add({
-      planOwnerId,
-      planId,
-      type: 'collaborator_join',
-      amountCents,
-      collaboratorId: context.auth.uid,
-      collaboratorName: collaboratorName || 'Collaborator',
-      stripePaymentIntentId: paymentIntent.id,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // Add notification for plan owner
-    await admin.firestore().collection('notifications').add({
-      userId: planOwnerId,
-      type: 'collaborator_charged',
-      message: `${collaboratorName || 'Someone'} has joined ${planName || 'your trip'}! We added $1 for this collaborator.`,
-      planId,
-      read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return { success: true, charged: true };
-  } catch (err) {
-    console.error('Stripe collaborator charge error:', err);
-    throw new functions.https.HttpsError(
-      'internal',
-      err.message || 'Charge failed. Please try again.'
-    );
+    snap = await db
+      .collection('plans')
+      .where('preTripChargeStatus', '==', 'pending')
+      .where('preTripChargeAt', '<=', now)
+      .limit(25)
+      .get();
+  } catch (e) {
+    console.error('processPreTripCharges query failed', e);
+    return null;
   }
+
+  for (const docSnap of snap.docs) {
+    const planRef = docSnap.ref;
+    const plan = docSnap.data();
+
+    try {
+      if (plan.preTripChargeStatus !== 'pending') continue;
+
+      const adminUid = plan.admin || plan.createdBy;
+      if (!adminUid) {
+        await planRef.update({
+          preTripChargeStatus: 'failed',
+          preTripChargeError: 'no_admin',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        continue;
+      }
+
+      const licSnap = await db.doc(`licenses/${adminUid}`).get();
+      const lic = licSnap.data() || {};
+      const licensePlan = resolveLicensePlan(lic);
+
+      if (licensePlan === 'business_monthly' || licensePlan === 'business_annual') {
+        await planRef.update({
+          preTripChargeStatus: 'not_applicable',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        continue;
+      }
+
+      const collabCount = collaboratorCountExcludingAdmin(plan, adminUid);
+      const amountCents = preTripAmountCents(licensePlan, collabCount);
+
+      if (amountCents <= 0) {
+        await planRef.update({
+          preTripChargeStatus: 'charged',
+          preTripChargeAmountCents: 0,
+          preTripChargeCollaboratorCount: collabCount,
+          preTripChargeCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        continue;
+      }
+
+      const stripeCustomerId = lic.stripeCustomerId;
+      const paymentMethodId = lic.stripePaymentMethodId || lic.defaultPaymentMethod;
+      if (!stripeCustomerId || !paymentMethodId) {
+        await planRef.update({
+          preTripChargeStatus: 'failed',
+          preTripChargeError: 'no_payment_method',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        await db.collection('notifications').add({
+          userId: adminUid,
+          type: 'pre_trip_charge_failed',
+          message: `Add a payment method to complete billing for "${plan.name || 'your trip'}" before it starts.`,
+          planId: planRef.id,
+          read: false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        continue;
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create(
+        {
+          amount: amountCents,
+          currency: 'usd',
+          customer: stripeCustomerId,
+          payment_method: paymentMethodId,
+          confirm: true,
+          automatic_payment_methods: { enabled: true },
+          metadata: {
+            type: 'pre_trip_charge',
+            planId: planRef.id,
+            adminUid,
+          },
+        },
+        { idempotencyKey: `pre_trip_${planRef.id}` }
+      );
+
+      if (paymentIntent.status !== 'succeeded') {
+        throw new Error(`Payment not completed: ${paymentIntent.status}`);
+      }
+
+      await planRef.update({
+        preTripChargeStatus: 'charged',
+        preTripChargeAmountCents: amountCents,
+        preTripChargeCollaboratorCount: collabCount,
+        preTripChargeStripePaymentIntentId: paymentIntent.id,
+        preTripChargeCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await db.collection('charges').add({
+        userId: adminUid,
+        planId: planRef.id,
+        type: 'pre_trip_charge',
+        amountCents,
+        collaboratorCount: collabCount,
+        licensePlan,
+        stripePaymentIntentId: paymentIntent.id,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      console.error('processPreTripCharges plan error', planRef.id, err);
+    }
+  }
+
+  return null;
 });
 
 function getAppBaseUrl() {
@@ -246,6 +215,10 @@ async function getPlanByInviteCode(inviteCode) {
 }
 
 async function addCollaboratorToPlan({ plan, collaboratorUid }) {
+  const logEntry = {
+    uid: collaboratorUid,
+    joinedAt: admin.firestore.Timestamp.now(),
+  };
   await admin.firestore().runTransaction(async (tx) => {
     const planRef = admin.firestore().doc(`plans/${plan.id}`);
     const planSnap = await tx.get(planRef);
@@ -258,6 +231,7 @@ async function addCollaboratorToPlan({ plan, collaboratorUid }) {
     }
     tx.update(planRef, {
       members: admin.firestore.FieldValue.arrayUnion(collaboratorUid),
+      collaboratorJoinLog: admin.firestore.FieldValue.arrayUnion(logEntry),
       inviteUseCount: admin.firestore.FieldValue.increment(1),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -265,9 +239,8 @@ async function addCollaboratorToPlan({ plan, collaboratorUid }) {
 }
 
 /**
- * Create a collaborator join request.
- * Individual plans => pending admin payment gate.
- * Business plans => direct join (no immediate charge gate).
+ * Complete invite join: add collaborator, append to collaboratorJoinLog.
+ * Per-collaborator and trip usage billing runs in processPreTripCharges (48h before trip).
  */
 exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -330,70 +303,19 @@ exports.createCollaboratorJoinRequest = functions.https.onCall(async (data, cont
     business,
   });
 
-  if (business) {
-    await addCollaboratorToPlan({ plan, collaboratorUid });
-    await admin.firestore().collection('notifications').add({
-      userId: adminUid,
-      type: 'collaborator_joined_business',
-      message: `${collaboratorEmail || 'A collaborator'} joined ${plan.name || 'your plan'}.`,
-      planId: plan.id,
-      read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    return { mode: 'joined', planId: plan.id, gateReason: 'business_plan' };
-  }
-
-  const existing = await admin
-    .firestore()
-    .collection('collaboratorJoinRequests')
-    .where('planId', '==', plan.id)
-    .where('collaboratorUid', '==', collaboratorUid)
-    .where('status', '==', 'pending_admin_payment')
-    .limit(1)
-    .get();
-  if (!existing.empty) {
-    return {
-      mode: 'pending_payment',
-      requestId: existing.docs[0].id,
-      planId: plan.id,
-      adminUid,
-      gateReason: 'existing_pending_request',
-    };
-  }
-
-  const reqRef = admin.firestore().collection('collaboratorJoinRequests').doc();
-  await reqRef.set({
-    planId: plan.id,
-    inviteCode,
-    adminUid,
-    adminEmail: plan.createdByEmail || null,
-    collaboratorUid,
-    collaboratorEmail,
-    collaboratorName: data?.collaboratorName || null,
-    status: 'pending_admin_payment',
-    amountCents: 100,
-    billingKind: 'individual',
-    licensePlan: adminPlan,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
+  await addCollaboratorToPlan({ plan, collaboratorUid });
   await admin.firestore().collection('notifications').add({
     userId: adminUid,
-    type: 'collaborator_payment_approval_required',
-    message: `${collaboratorEmail || 'A collaborator'} is waiting to join ${plan.name || 'your plan'}.`,
+    type: business ? 'collaborator_joined_business' : 'collaborator_joined',
+    message: `${collaboratorEmail || 'A collaborator'} joined ${plan.name || 'your plan'}.`,
     planId: plan.id,
-    requestId: reqRef.id,
     read: false,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
-
   return {
-    mode: 'pending_payment',
-    requestId: reqRef.id,
+    mode: 'joined',
     planId: plan.id,
-    adminUid,
-    gateReason: 'individual_or_ltd_plan',
+    gateReason: business ? 'business_plan' : 'deferred_pre_trip_billing',
   };
 });
 
@@ -548,8 +470,13 @@ exports.finalizeCollaboratorJoinAfterCheckout = functions.https.onCall(async (da
     const planData = planSnap.data();
 
     if (!Array.isArray(planData.members) || !planData.members.includes(reqData.collaboratorUid)) {
+      const logEntry = {
+        uid: reqData.collaboratorUid,
+        joinedAt: admin.firestore.Timestamp.now(),
+      };
       tx.update(planRef, {
         members: admin.firestore.FieldValue.arrayUnion(reqData.collaboratorUid),
+        collaboratorJoinLog: admin.firestore.FieldValue.arrayUnion(logEntry),
         inviteUseCount: admin.firestore.FieldValue.increment(1),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });

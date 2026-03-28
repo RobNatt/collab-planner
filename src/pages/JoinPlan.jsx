@@ -337,7 +337,7 @@ function JoinPlan() {
           </div>
           <h1 style={{ marginTop: 0, color: colors.text, marginBottom: '16px' }}>Ready to join</h1>
           <p style={{ color: colors.textSecondary, marginBottom: '24px', lineHeight: 1.5 }}>
-            Confirm to request access. If this organizer is on an individual plan, they must acknowledge and pay the collaborator fee before you can continue.
+            Confirm to join this plan. The organizer is billed for trip usage 48 hours before the trip starts, not when you join — so you can try planning together first.
           </p>
 
           <div style={{
@@ -382,7 +382,7 @@ function JoinPlan() {
               transition: 'all 0.2s ease',
             }}
           >
-            {joining ? 'Submitting request...' : 'Yes — continue'}
+            {joining ? 'Joining...' : 'Join plan'}
           </button>
 
           <button

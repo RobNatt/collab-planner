@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -659,6 +659,20 @@ function Landing() {
                       <div>{p.name}</div>
                       <div style={{ fontSize: '28px', color: colors.primary, marginTop: '4px' }}>{p.price}</div>
                       <div style={{ fontSize: '13px', color: colors.textSecondary, fontWeight: '500' }}>{p.priceNote}</div>
+                      {p.trialLabel && (
+                        <div style={{
+                          display: 'inline-block',
+                          marginTop: '8px',
+                          padding: '4px 10px',
+                          backgroundColor: `${colors.primary}18`,
+                          color: colors.primary,
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                        }}>
+                          {p.trialLabel}
+                        </div>
+                      )}
                       {p.savings && (
                         <div style={{
                           display: 'inline-block',
@@ -671,6 +685,21 @@ function Landing() {
                           fontWeight: '600',
                         }}>
                           {p.savings}
+                        </div>
+                      )}
+                      {p.slug && (
+                        <div style={{ marginTop: '12px' }}>
+                          <Link
+                            to={`/plans/${p.slug}`}
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: colors.primary,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            View plan details
+                          </Link>
                         </div>
                       )}
                     </th>
@@ -686,12 +715,24 @@ function Landing() {
                     </td>
                   ))}
                 </tr>
+                {planTab === 'individual' && (
+                  <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
+                    <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Trial</td>
+                    {INDIVIDUAL_PLANS.map((p) => (
+                      <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
+                        {p.trialLabel || '—'}
+                      </td>
+                    ))}
+                  </tr>
+                )}
                 <tr style={{ borderBottom: `1px solid ${colors.border}` }}>
                   <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Collaborator pricing</td>
                   {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
                     <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
                       {planTab === 'individual'
-                        ? (p.id === 'pay_per_trip' ? '$1 when they join' : '$1 when they join a trip')
+                        ? (p.id === 'pay_per_trip'
+                          ? '$1 per collaborator (billed 48h before trip)'
+                          : '$1 per collaborator per trip (48h before start)')
                         : 'First 10 free, then $2/mo each'}
                     </td>
                   ))}
@@ -720,7 +761,11 @@ function Landing() {
                   <td style={{ padding: '16px', color: colors.textSecondary, fontSize: '14px' }}>Billing</td>
                   {(planTab === 'individual' ? INDIVIDUAL_PLANS : BUSINESS_PLANS).map((p) => (
                     <td key={p.id} style={{ padding: '16px', textAlign: 'center', color: colors.text, fontSize: '14px' }}>
-                      {p.id === 'pay_per_trip' ? 'Per trip + per collaborator' : p.id.includes('annual') ? 'Annual' : 'Monthly'}
+                      {p.id === 'pay_per_trip'
+                        ? 'Trip + collaborators at T−48h'
+                        : planTab === 'business'
+                          ? (p.id.includes('annual') ? 'Annual subscription' : 'Monthly subscription')
+                          : (p.id.includes('annual') ? 'Annual + usage at T−48h' : 'Monthly + usage at T−48h')}
                     </td>
                   ))}
                 </tr>

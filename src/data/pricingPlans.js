@@ -6,53 +6,83 @@
 export const INDIVIDUAL_PLANS = [
   {
     id: 'pay_per_trip',
+    slug: 'pay-per-trip',
     name: 'Pay Per Trip',
     price: '$2',
     priceNote: '/trip + $1/collaborator',
     monthlyEquivalent: null,
-    description: 'Sign up free. Pay when you confirm a trip. $2 per trip + $1 when each collaborator joins.',
+    description:
+      'Sign up free. Collaborators can join anytime; trip and collaborator usage are billed together 48 hours before your trip starts.',
     features: [
       'Sign up free, no subscription',
-      '$2 per trip at confirmation',
-      '$1 per collaborator when they join (link or QR)',
+      '$2 per trip + $1 per collaborator, charged 48h before trip start',
+      'Invite collaborators early — no charge until the pre-trip billing window',
       'Unlimited trip duration',
       'All features included',
     ],
+    benefits: [
+      'Try the full product with your group before any usage-based charge hits your card.',
+      'No trip fee or collaborator fees at signup — billing runs once, 48 hours before the trip begins.',
+      'Predictable math: $2 for the trip plus $1 for each collaborator on the plan at billing time (organizer excluded).',
+      'Unlimited trip length and every planning feature, same as subscribers.',
+    ],
     cta: 'Get Started',
-    ctaNote: 'Add payment method when you create your first trip',
+    ctaNote: 'Add a payment method before the pre-trip billing window',
     stripePriceId: null, // Set via env: pay-per-trip uses SetupIntent + Payment Intents
   },
   {
     id: 'monthly',
+    slug: 'monthly',
     name: 'Monthly',
     price: '$10',
     priceNote: '/month',
     monthlyEquivalent: 10,
-    description: 'Unlimited plans. $1 per collaborator when they create a profile and join a trip.',
-    savings: null,
+    trialLabel: 'Free 2 week trial',
+    description:
+      'Unlimited plans for one predictable subscription. Collaborator usage is billed 48 hours before each trip.',
     features: [
+      'Free 2 week trial',
       'Unlimited trip plans',
-      '$1 per collaborator when they join a trip',
+      '$10/month subscription',
+      '$1 per collaborator per trip, charged 48h before trip start',
       'Unlimited trip duration',
       'All features included',
     ],
+    benefits: [
+      'Free 2 week trial — add a card at signup; subscription billing starts after the trial unless you cancel.',
+      'Best when you plan several group trips per year and want a simple monthly subscription.',
+      'Collaborators can join and explore the plan early; per-collaborator charges align with the trip date, not the invite.',
+      'Unlimited itineraries, tasks, and collaboration features on every plan.',
+    ],
+    savings: null,
     cta: 'Subscribe Monthly',
     stripeEnvKey: 'VITE_STRIPE_INDIVIDUAL_MONTHLY_LINK',
   },
   {
     id: 'annual',
+    slug: 'annual',
     name: 'Annual',
     price: '$100',
     priceNote: '/year',
     monthlyEquivalent: 8.33,
-    description: '2 months free. $1 per collaborator when they create a profile and join a trip.',
-    savings: '2 months free',
+    trialLabel: 'Free 2 week trial',
+    description:
+      'Two months free vs monthly. Collaborator usage is billed 48 hours before each trip.',
     features: [
+      'Free 2 week trial',
       'Unlimited trip plans',
-      '$1 per collaborator when they join a trip',
+      '$100/year (2 months free vs monthly)',
+      '$1 per collaborator per trip, charged 48h before trip start',
       'Unlimited trip duration',
       'All features included',
     ],
+    benefits: [
+      'Free 2 week trial — add a card at signup; subscription billing starts after the trial unless you cancel.',
+      'Lowest subscription cost for individuals who plan trips all year.',
+      'Same collaborator billing model as monthly: try people on the plan, pay for who is on the roster at the pre-trip window.',
+      'Unlimited plans and full feature access.',
+    ],
+    savings: '2 months free',
     cta: 'Subscribe Annually',
     stripeEnvKey: 'VITE_STRIPE_INDIVIDUAL_ANNUAL_LINK',
   },
@@ -61,6 +91,7 @@ export const INDIVIDUAL_PLANS = [
 export const BUSINESS_PLANS = [
   {
     id: 'business_monthly',
+    slug: 'business-monthly',
     name: 'Business Monthly',
     price: '$50',
     priceNote: '/month',
@@ -76,11 +107,17 @@ export const BUSINESS_PLANS = [
       'Unlimited trip duration',
       'All features included',
     ],
+    benefits: [
+      'Built for teams and agencies that run many client or staff trips.',
+      'Roster-based pricing: the first ten people are included; expand the roster as you grow.',
+      'We still record everyone who joins each plan for your dashboard and transparency.',
+    ],
     cta: 'Subscribe Monthly',
     stripeEnvKey: 'VITE_STRIPE_BUSINESS_MONTHLY_LINK',
   },
   {
     id: 'business_annual',
+    slug: 'business-annual',
     name: 'Business Annual',
     price: '$500',
     priceNote: '/year',
@@ -95,6 +132,11 @@ export const BUSINESS_PLANS = [
       'Add/remove collaborators from trips',
       'Unlimited trip duration',
       'All features included',
+    ],
+    benefits: [
+      'Same Business features as monthly with two months free on the subscription.',
+      'Predictable annual cost for organizations standardizing on Collab Planner.',
+      'Roster and trip activity stay visible in one place.',
     ],
     cta: 'Subscribe Annually',
     stripeEnvKey: 'VITE_STRIPE_BUSINESS_ANNUAL_LINK',
@@ -118,3 +160,14 @@ export const FEATURE_ROW_LABELS = [
   'Roster / saved profiles',
   'Billing',
 ];
+
+/** All public marketing plans (individual + business) for detail pages and lookups. */
+export const ALL_MARKETING_PLANS = [...INDIVIDUAL_PLANS, ...BUSINESS_PLANS];
+
+/**
+ * @param {string} slug
+ * @returns {typeof INDIVIDUAL_PLANS[0] | undefined}
+ */
+export function getMarketingPlanBySlug(slug) {
+  return ALL_MARKETING_PLANS.find((p) => p.slug === slug);
+}
