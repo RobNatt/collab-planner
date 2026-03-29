@@ -101,5 +101,14 @@ service cloud.firestore {
       // Allow users to delete only their own profile
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Anonymous demo funnel email capture (marketing)
+    match /demoLeads/{id} {
+      allow read, update, delete: if false;
+      allow create: if request.resource.data.email is string
+        && request.resource.data.email.size() >= 5
+        && request.resource.data.email.size() <= 320
+        && request.resource.data.source == 'demo_funnel';
+    }
   }
 }

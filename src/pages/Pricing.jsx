@@ -2,14 +2,13 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /**
- * Redirect /pricing to main page pricing section.
- * Full pricing table is on Landing (#pricing); LTD offer is at /ltd.
+ * Redirect /pricing to subscription plan detail (full compare lives on plan pages).
  */
 function Pricing() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate('/#pricing', { replace: true });
+    navigate('/plans/monthly', { replace: true });
   }, [navigate]);
 
   return null;

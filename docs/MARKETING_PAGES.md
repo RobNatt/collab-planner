@@ -10,12 +10,11 @@ Paths are relative to the project root unless noted.
 
 | URL path | Page component | Source file |
 |----------|----------------|-------------|
-| `/` | Landing (home) | `src/pages/Landing.jsx` |
-| `/#pricing` | Same as `/`; pricing section id | Scroll target inside `Landing.jsx` (`id="pricing"`) |
-| `/pricing` | Redirect | `src/pages/Pricing.jsx` → client redirect to `/#pricing` |
+| `/` | LTD marketing funnel (home) | `src/pages/Landing.jsx` |
+| `/pricing` | Redirect | `src/pages/Pricing.jsx` → `/plans/monthly` |
 | `/plans/:planSlug` | Per-plan marketing detail | `src/pages/PlanPage.jsx` |
 | `/ltd` | Lifetime deal | `src/pages/LTD.jsx` |
-| `/demo` | Demo / sample trip | `src/pages/DemoTrip.jsx` |
+| `/demo` | Interactive demo trip (funnel; paywall + email capture) | `src/pages/DemoTrip.jsx` |
 | `/login` | Auth | `src/pages/Login.jsx` |
 | `/welcome` | Post-signup onboarding | `src/pages/Welcome.jsx` |
 | `/invite/:inviteCode` | Pre-login invite explainer | `src/pages/InviteLanding.jsx` |
@@ -90,6 +89,16 @@ Update `index.html` when you change the global positioning line for ads or searc
 7. **Blog:** `src/data/blogPosts.js`, `src/pages/Blog.jsx` (index chrome)
 
 ---
+
+## Funnel-specific
+
+| What | Location |
+|------|----------|
+| Paywall modal (demo + copy) | `src/components/funnel/FunnelPaywallModal.jsx` |
+| Email capture modal | `src/components/funnel/EmailCaptureModal.jsx` |
+| First-visit pitch popup (demo) | `src/components/funnel/DemoPitchPopup.jsx` |
+| Post-visit email sequence (paste into ESP) | `docs/EMAIL_SEQUENCE_LTD_FUNNEL.md` |
+| Demo leads (Firestore) | Collection `demoLeads` — rules in `firestore.rules` |
 
 ## Changelog-style docs (optional reference)
 
