@@ -4,31 +4,6 @@ import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { LandingScreenshotCarousel } from '../components/LandingScreenshotCarousel';
 
-function ScreenshotSlot({ colors, label }) {
-  return (
-    <div
-      className="animate-fadeIn"
-      style={{
-        marginTop: '20px',
-        borderRadius: '16px',
-        border: `2px dashed ${colors.border}`,
-        backgroundColor: colors.backgroundTertiary,
-        minHeight: '200px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: colors.textMuted,
-        fontSize: '14px',
-        fontWeight: '600',
-        textAlign: 'center',
-        padding: '24px',
-      }}
-    >
-      {label}
-    </div>
-  );
-}
-
 function Section({ children, style = {}, id }) {
   return (
     <section id={id} style={{ padding: '56px 20px', ...style }}>
@@ -268,7 +243,6 @@ function Landing() {
             Less than what most people lose on ONE messy group dinner split
           </p>
         </div>
-        <ScreenshotSlot colors={colors} label="Demo / product preview (add screenshot)" />
       </Section>
 
       {/* IDENTITY */}
