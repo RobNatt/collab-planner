@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { LandingScreenshotCarousel } from '../components/LandingScreenshotCarousel';
 
 function ScreenshotSlot({ colors, label }) {
   return (
@@ -215,7 +216,7 @@ function Landing() {
             </li>
           ))}
         </ul>
-        <ScreenshotSlot colors={colors} label="Product UI: solution / workspace (add screenshot)" />
+        <LandingScreenshotCarousel colors={colors} />
       </Section>
 
       {/* HOW IT WORKS */}

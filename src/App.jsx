@@ -25,11 +25,30 @@ const BlogPost = lazy(() => import('./pages/BlogPost'));
 const Affiliates = lazy(() => import('./pages/Affiliates'));
 const AffiliateDashboard = lazy(() => import('./pages/AffiliateDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const MarketingUiMocks = lazy(() => import('./pages/MarketingUiMocks'));
+
+function routeLoadingFallback() {
+  return (
+    <div
+      style={{
+        minHeight: '40vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '15px',
+        color: '#64748b',
+      }}
+    >
+      Loading…
+    </div>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={null}>
+      <Suspense fallback={routeLoadingFallback()}>
         <AnalyticsTracker />
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -54,6 +73,8 @@ function App() {
           <Route path="/join/:inviteCode" element={<JoinPlan />} />
           <Route path="/join/wait/:requestId" element={<JoinWait />} />
           <Route path="/invite-payment/success" element={<InvitePaymentSuccess />} />
+          <Route path="/marketing-ui-mocks" element={<MarketingUiMocks />} />
+          <Route path="/ui-mocks" element={<MarketingUiMocks />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

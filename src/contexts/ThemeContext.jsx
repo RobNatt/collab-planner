@@ -67,26 +67,35 @@ export const themes = {
   }
 };
 
-export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
+const VALID_THEMES = new Set(['light', 'dark']);
+
+function readStoredTheme() {
+  try {
     const saved = localStorage.getItem('travel-gang-theme');
-    return saved || 'light';
-  });
+    return VALID_THEMES.has(saved) ? saved : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+export function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState(readStoredTheme);
+
+  const resolvedTheme = VALID_THEMES.has(theme) ? theme : 'light';
+  const colors = themes[resolvedTheme] ?? themes.light;
 
   useEffect(() => {
-    localStorage.setItem('travel-gang-theme', theme);
-    document.body.style.backgroundColor = themes[theme].background;
-    document.body.style.color = themes[theme].text;
-  }, [theme]);
+    localStorage.setItem('travel-gang-theme', resolvedTheme);
+    document.body.style.backgroundColor = colors.background;
+    document.body.style.color = colors.text;
+  }, [resolvedTheme, colors]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const colors = themes[theme];
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, colors }}>
+    <ThemeContext.Provider value={{ theme: resolvedTheme, toggleTheme, colors }}>
       {children}
     </ThemeContext.Provider>
   );
