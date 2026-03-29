@@ -7,6 +7,9 @@ const DEFAULT_SLIDES = [
   { src: '/4.png', label: 'Shared itinerary' },
 ];
 
+/** One fixed frame for every slide (landing column is max ~640px wide). */
+const FRAME_ASPECT = '16 / 10';
+
 export function LandingScreenshotCarousel({ colors, slides = DEFAULT_SLIDES }) {
   const [index, setIndex] = useState(0);
   const n = slides.length;
@@ -34,7 +37,8 @@ export function LandingScreenshotCarousel({ colors, slides = DEFAULT_SLIDES }) {
       <div
         style={{
           position: 'relative',
-          lineHeight: 0,
+          width: '100%',
+          aspectRatio: FRAME_ASPECT,
           backgroundColor: colors.backgroundTertiary,
         }}
       >
@@ -42,8 +46,12 @@ export function LandingScreenshotCarousel({ colors, slides = DEFAULT_SLIDES }) {
           src={current.src}
           alt={current.label}
           style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
             width: '100%',
-            height: 'auto',
+            height: '100%',
+            objectFit: 'contain',
             display: 'block',
           }}
           loading={index === 0 ? 'eager' : 'lazy'}
